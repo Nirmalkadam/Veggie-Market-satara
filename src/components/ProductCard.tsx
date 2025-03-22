@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 interface ProductCardProps {
   product: Product;
@@ -22,11 +22,6 @@ interface ProductCardProps {
 const ProductCard = ({ product, featured = false }: ProductCardProps) => {
   const { addItem } = useCart();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-  
-  const formattedPrice = new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-  }).format(product.price);
   
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -123,7 +118,7 @@ const ProductCard = ({ product, featured = false }: ProductCardProps) => {
           <div className="flex flex-wrap justify-between items-start mb-2">
             <h3 className="text-base font-medium">{product.name}</h3>
             <div className="text-base font-semibold text-primary">
-              {formattedPrice}
+              {formatCurrency(product.price)}
               <span className="text-xs text-muted-foreground ml-1">/ {product.unit}</span>
             </div>
           </div>

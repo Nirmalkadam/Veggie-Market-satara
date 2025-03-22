@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -13,29 +12,22 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { formatCurrency } from '@/lib/utils';
 
 const Cart = () => {
   const { items, totalItems, subtotal, updateQuantity, removeItem, clearCart } = useCart();
   const { isAuthenticated } = useAuth();
 
   // Calculate estimated tax (for demo purposes)
-  const taxRate = 0.0825; // 8.25%
+  const taxRate = 0.18; // 18% GST for India
   const estimatedTax = subtotal * taxRate;
   
-  // Calculate shipping (free over $50)
-  const shippingThreshold = 50;
-  const shippingCost = subtotal >= shippingThreshold ? 0 : 5.99;
+  // Calculate shipping (free over ₹1000)
+  const shippingThreshold = 1000;
+  const shippingCost = subtotal >= shippingThreshold ? 0 : 99;
   
   // Calculate total
   const total = subtotal + estimatedTax + shippingCost;
-
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
 
   if (items.length === 0) {
     return (

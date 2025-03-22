@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Leaf, Truck, Clock, ThumbsUp } from "lucide-react";
@@ -7,13 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import ProductCard from "@/components/ProductCard";
 import { Product } from "@/types";
 
-// Mock featured products
+// Mock featured products - updating prices to more realistic INR values
 const featuredProducts: Product[] = [
   {
     id: "1",
     name: "Organic Broccoli",
     description: "Fresh organic broccoli, locally grown and packed with vitamins and minerals.",
-    price: 2.99,
+    price: 149.99,
     image: "https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "vegetables",
     stock: 50,
@@ -25,7 +24,7 @@ const featuredProducts: Product[] = [
     id: "2",
     name: "Fresh Carrots",
     description: "Sweet and crunchy organic carrots, perfect for salads, juicing, or cooking.",
-    price: 1.49,
+    price: 79.99,
     image: "https://images.unsplash.com/photo-1582515073490-39981397c445?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "vegetables",
     stock: 80,
@@ -36,7 +35,7 @@ const featuredProducts: Product[] = [
     id: "3",
     name: "Bell Peppers Mix",
     description: "Colorful mix of fresh bell peppers - red, yellow, and green. Great for stir-fries or salads.",
-    price: 3.99,
+    price: 199.99,
     image: "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "vegetables",
     stock: 35,
@@ -47,7 +46,7 @@ const featuredProducts: Product[] = [
     id: "4",
     name: "Fresh Spinach",
     description: "Tender and nutritious organic spinach leaves, responsibly grown and harvested.",
-    price: 2.49,
+    price: 129.99,
     image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "greens",
     stock: 40,
@@ -58,7 +57,7 @@ const featuredProducts: Product[] = [
     id: "5",
     name: "Organic Tomatoes",
     description: "Juicy, ripe organic tomatoes, perfect for salads, sandwiches, or cooking.",
-    price: 3.29,
+    price: 169.99,
     image: "https://images.unsplash.com/photo-1592841200221-a6c613d6e87c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "vegetables",
     stock: 60,

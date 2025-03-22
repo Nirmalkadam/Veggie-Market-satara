@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
@@ -24,8 +23,8 @@ import { Separator } from '@/components/ui/separator';
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/ProductCard';
+import { formatCurrency } from '@/lib/utils';
 
-// Mock product data
 const mockProducts: Product[] = [
   {
     id: "1",
@@ -118,19 +117,15 @@ const ProductDetail = () => {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   
   useEffect(() => {
-    // In a real app, this would be an API call
-    // For now, we'll use our mock data
     const foundProduct = mockProducts.find(p => p.id === id);
     if (foundProduct) {
       setProduct(foundProduct);
       
-      // Find related products (same category, excluding current product)
       const related = mockProducts
         .filter(p => p.category === foundProduct.category && p.id !== foundProduct.id)
         .slice(0, 3);
       setRelatedProducts(related);
     }
-    // Reset quantity when product changes
     setQuantity(1);
   }, [id]);
 
@@ -160,26 +155,12 @@ const ProductDetail = () => {
     );
   }
 
-  const formattedPrice = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(product.price);
-
-  // Calculate discounted price if applicable
   const discountedPrice = product.discount
     ? product.price * (1 - product.discount / 100)
-    : null;
-  
-  const formattedDiscountedPrice = discountedPrice
-    ? new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-      }).format(discountedPrice)
     : null;
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
-      {/* Breadcrumb */}
       <div className="mb-6">
         <nav className="flex">
           <Link 
@@ -192,16 +173,13 @@ const ProductDetail = () => {
         </nav>
       </div>
 
-      {/* Product Details */}
       <div className="grid md:grid-cols-2 gap-8 mb-12">
-        {/* Product Image */}
         <div className="relative rounded-xl overflow-hidden aspect-square bg-accent/30">
           <img
             src={product.image}
             alt={product.name}
             className="w-full h-full object-contain"
           />
-          {/* Badges */}
           <div className="absolute top-4 left-4 flex flex-col gap-2">
             {product.organic && (
               <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800">
@@ -216,7 +194,6 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Product Info */}
         <div>
           <div className="mb-6">
             <span className="text-sm text-muted-foreground capitalize">{product.category}</span>
@@ -226,25 +203,21 @@ const ProductDetail = () => {
               {discountedPrice ? (
                 <>
                   <span className="text-2xl font-semibold text-primary mr-2">
-                    {formattedDiscountedPrice}
+                    {formatCurrency(discountedPrice)}
                   </span>
                   <span className="text-lg text-muted-foreground line-through">
-                    {formattedPrice}
+                    {formatCurrency(product.price)}
                   </span>
                 </>
               ) : (
                 <span className="text-2xl font-semibold text-primary">
-                  {formattedPrice}
+                  {formatCurrency(product.price)}
                 </span>
               )}
               <span className="text-sm text-muted-foreground ml-2">
                 / {product.unit}
               </span>
             </div>
-
-            <p className="text-muted-foreground mb-6">
-              {product.description}
-            </p>
 
             <div className="flex items-center space-x-4 mb-6">
               <div className="text-sm font-medium">Availability:</div>
@@ -259,7 +232,6 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Quantity Selector */}
             <div className="flex items-center space-x-4 mb-6">
               <div className="text-sm font-medium">Quantity:</div>
               <div className="flex items-center">
@@ -287,7 +259,6 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex flex-wrap gap-3 mb-6">
               <Button 
                 size="lg" 
@@ -306,7 +277,6 @@ const ProductDetail = () => {
               </Button>
             </div>
 
-            {/* Product Features */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-center border border-border rounded-lg p-3">
                 <div className="mr-3 bg-accent rounded-full p-2">
@@ -314,7 +284,7 @@ const ProductDetail = () => {
                 </div>
                 <div>
                   <p className="text-sm font-medium">Free Shipping</p>
-                  <p className="text-xs text-muted-foreground">On orders over $50</p>
+                  <p className="text-xs text-muted-foreground">On orders over ₹1000</p>
                 </div>
               </div>
               
@@ -342,7 +312,6 @@ const ProductDetail = () => {
         </div>
       </div>
 
-      {/* Product Tabs */}
       <div className="mb-16">
         <Tabs defaultValue="description">
           <TabsList className="w-full justify-start border-b rounded-none bg-transparent h-auto py-0 mb-6">
@@ -445,7 +414,6 @@ const ProductDetail = () => {
         </Tabs>
       </div>
 
-      {/* Related Products */}
       {relatedProducts.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-6">
