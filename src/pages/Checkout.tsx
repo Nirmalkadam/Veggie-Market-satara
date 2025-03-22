@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -33,7 +32,6 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
-// Form schema
 const checkoutSchema = z.object({
   firstName: z.string().min(2, { message: 'First name is required' }),
   lastName: z.string().min(2, { message: 'Last name is required' }),
@@ -70,22 +68,19 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'paypal'>('credit_card');
 
-  // Calculate order totals
-  const taxRate = 0.0825; // 8.25%
+  const taxRate = 0.18; // 18% GST for India
   const estimatedTax = subtotal * taxRate;
-  const shippingThreshold = 50;
-  const shippingCost = subtotal >= shippingThreshold ? 0 : 5.99;
+  const shippingThreshold = 1000; // ₹1000
+  const shippingCost = subtotal >= shippingThreshold ? 0 : 99; // ₹99 for shipping
   const total = subtotal + estimatedTax + shippingCost;
 
-  // Format currency
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
     }).format(amount);
   };
 
-  // Initialize form
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
@@ -104,34 +99,28 @@ const Checkout = () => {
     },
   });
 
-  // Watch form values
   const watchPaymentMethod = form.watch('paymentMethod');
   const watchSameAsShipping = form.watch('sameAsShipping');
 
-  // Update payment method when it changes in the form
   useEffect(() => {
     setPaymentMethod(watchPaymentMethod);
   }, [watchPaymentMethod]);
 
-  // Redirect if cart is empty
   useEffect(() => {
     if (items.length === 0) {
       navigate('/cart');
     }
   }, [items, navigate]);
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login?redirect=checkout');
     }
   }, [isAuthenticated, navigate]);
 
-  // Handle form submission
   const onSubmit = async (data: CheckoutFormValues) => {
     setIsSubmitting(true);
     
-    // Simulate API call
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
@@ -139,10 +128,8 @@ const Checkout = () => {
       console.log('Order items:', items);
       console.log('Order total:', total);
       
-      // Show success toast and redirect
       toast.success('Your order has been placed successfully!');
       
-      // Clear cart and redirect to success page
       clearCart();
       navigate('/');
     } catch (error) {
@@ -163,11 +150,9 @@ const Checkout = () => {
       </div>
 
       <div className="grid md:grid-cols-3 gap-8">
-        {/* Checkout Form */}
         <div className="md:col-span-2">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              {/* Shipping Information */}
               <div className="bg-card border border-border rounded-xl p-6">
                 <h2 className="text-xl font-medium mb-4">Shipping Information</h2>
                 
@@ -346,7 +331,6 @@ const Checkout = () => {
                 </div>
               </div>
               
-              {/* Billing Information */}
               <div className="bg-card border border-border rounded-xl p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-medium">Billing Information</h2>
@@ -422,7 +406,6 @@ const Checkout = () => {
                 )}
               </div>
               
-              {/* Payment Method */}
               <div className="bg-card border border-border rounded-xl p-6">
                 <h2 className="text-xl font-medium mb-4">Payment Method</h2>
                 
@@ -564,7 +547,6 @@ const Checkout = () => {
           </Form>
         </div>
         
-        {/* Order Summary */}
         <div className="md:col-span-1">
           <div className="bg-card border border-border rounded-xl p-6 sticky top-20">
             <h2 className="text-xl font-medium mb-4">Order Summary</h2>
