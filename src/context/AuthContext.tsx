@@ -1,0 +1,146 @@
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { toast } from 'sonner';
+import { User } from '@/types';
+
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Mock user data
+const MOCK_USERS = [
+  {
+    id: '1',
+    email: 'admin@veggiemarket.com',
+    name: 'Admin User',
+    password: 'admin123',
+    isAdmin: true,
+  },
+  {
+    id: '2',
+    email: 'user@example.com',
+    name: 'Regular User',
+    password: 'user123',
+    isAdmin: false,
+  },
+];
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check for saved user in localStorage
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser) as User;
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Failed to parse saved user:', error);
+        localStorage.removeItem('user');
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    setLoading(true);
+    
+    // Simulate API call latency
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    try {
+      // Find user in mock data
+      const foundUser = MOCK_USERS.find(u => 
+        u.email.toLowerCase() === email.toLowerCase() && u.password === password
+      );
+      
+      if (!foundUser) {
+        throw new Error('Invalid email or password');
+      }
+      
+      // Omit password before saving to state
+      const { password: _, ...userWithoutPassword } = foundUser;
+      
+      setUser(userWithoutPassword);
+      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+      
+      toast.success(`Welcome back, ${foundUser.name}!`);
+    } catch (error) {
+      toast.error((error as Error).message || 'Login failed');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const register = async (email: string, password: string, name: string) => {
+    setLoading(true);
+    
+    // Simulate API call latency
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    try {
+      // Check if user already exists
+      if (MOCK_USERS.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+        throw new Error('User with this email already exists');
+      }
+      
+      // In a real app, we would make an API call to register the user
+      // For demo purposes, we'll just create a new user object
+      const newUser = {
+        id: `${MOCK_USERS.length + 1}`,
+        email,
+        name,
+        isAdmin: false,
+      };
+      
+      setUser(newUser);
+      localStorage.setItem('user', JSON.stringify(newUser));
+      
+      toast.success('Registration successful! Welcome aboard.');
+    } catch (error) {
+      toast.error((error as Error).message || 'Registration failed');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('user');
+    toast.success('You have been logged out.');
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        isAuthenticated: !!user,
+        login,
+        register,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
