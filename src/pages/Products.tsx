@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
@@ -31,8 +30,8 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Product, Category, SearchFilters } from '@/types';
 import ProductCard from '@/components/ProductCard';
+import { formatCurrency } from '@/lib/utils';
 
-// Mock products data
 const mockProducts: Product[] = [
   {
     id: "1",
@@ -186,11 +185,9 @@ const Products = () => {
   const [sortBy, setSortBy] = useState('recommended');
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
-  // Initialize products and filters from URL
   useEffect(() => {
     let filteredProducts = [...mockProducts];
 
-    // Apply search query
     if (filters.query) {
       filteredProducts = filteredProducts.filter(product => 
         product.name.toLowerCase().includes(filters.query.toLowerCase()) ||
@@ -198,14 +195,12 @@ const Products = () => {
       );
     }
 
-    // Apply category filter
     if (filters.category && filters.category !== 'all') {
       filteredProducts = filteredProducts.filter(product => 
         product.category === filters.category
       );
     }
 
-    // Apply price range
     if (filters.minPrice !== undefined) {
       filteredProducts = filteredProducts.filter(product => 
         product.price >= (filters.minPrice as number)
@@ -217,12 +212,10 @@ const Products = () => {
       );
     }
 
-    // Apply organic filter
     if (filters.organic) {
       filteredProducts = filteredProducts.filter(product => product.organic);
     }
 
-    // Apply sorting
     switch (sortBy) {
       case 'price-low-high':
         filteredProducts.sort((a, b) => a.price - b.price);
@@ -236,14 +229,12 @@ const Products = () => {
       case 'name-z-a':
         filteredProducts.sort((a, b) => b.name.localeCompare(a.name));
         break;
-      // 'recommended' is the default, no sorting needed
       default:
         break;
     }
 
     setProducts(filteredProducts);
 
-    // Update active filters list
     const newActiveFilters: string[] = [];
     if (filters.category && filters.category !== 'all') {
       newActiveFilters.push(`Category: ${filters.category.charAt(0).toUpperCase() + filters.category.slice(1)}`);
@@ -315,7 +306,6 @@ const Products = () => {
     const updatedFilters = { ...filters, ...newFilters };
     setFilters(updatedFilters);
     
-    // Update URL parameters
     const params = new URLSearchParams();
     if (updatedFilters.query) params.set('search', updatedFilters.query);
     if (updatedFilters.category && updatedFilters.category !== 'all') params.set('category', updatedFilters.category);
@@ -328,7 +318,6 @@ const Products = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
-      {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-semibold tracking-tight mb-2">
           Fresh Vegetables
@@ -338,9 +327,7 @@ const Products = () => {
         </p>
       </div>
 
-      {/* Filters & Search Section */}
       <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
-        {/* Search Form */}
         <form onSubmit={handleSearch} className="flex w-full md:w-auto">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -358,7 +345,6 @@ const Products = () => {
         </form>
 
         <div className="flex items-center gap-2 md:ml-auto">
-          {/* Sort By */}
           <div className="flex-1 md:flex-none">
             <Select
               value={sortBy}
@@ -380,7 +366,6 @@ const Products = () => {
             </Select>
           </div>
 
-          {/* Filter Button (Mobile) */}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" className="md:hidden">
@@ -393,7 +378,6 @@ const Products = () => {
                 <SheetTitle>Filters</SheetTitle>
               </SheetHeader>
               <div className="py-4 space-y-6">
-                {/* Categories */}
                 <div>
                   <h3 className="font-medium mb-3">Categories</h3>
                   <div className="flex flex-wrap gap-2">
@@ -411,7 +395,6 @@ const Products = () => {
                   </div>
                 </div>
 
-                {/* Price Range */}
                 <div>
                   <h3 className="font-medium mb-3">Price Range</h3>
                   <div className="px-2">
@@ -424,8 +407,8 @@ const Products = () => {
                       className="mb-4"
                     />
                     <div className="flex justify-between text-sm">
-                      <span>${priceRange[0].toFixed(2)}</span>
-                      <span>${priceRange[1].toFixed(2)}</span>
+                      <span>{formatCurrency(priceRange[0])}</span>
+                      <span>{formatCurrency(priceRange[1])}</span>
                     </div>
                     <Button 
                       variant="outline" 
@@ -438,7 +421,6 @@ const Products = () => {
                   </div>
                 </div>
 
-                {/* Organic Only */}
                 <div>
                   <div className="flex items-center space-x-2">
                     <Switch 
@@ -455,7 +437,6 @@ const Products = () => {
         </div>
       </div>
 
-      {/* Desktop Filters */}
       <div className="hidden md:flex flex-wrap gap-6 mb-6">
         <div className="space-y-4">
           <div>
@@ -489,8 +470,8 @@ const Products = () => {
                 className="mb-4"
               />
               <div className="flex justify-between text-sm">
-                <span>${priceRange[0].toFixed(2)}</span>
-                <span>${priceRange[1].toFixed(2)}</span>
+                <span>{formatCurrency(priceRange[0])}</span>
+                <span>{formatCurrency(priceRange[1])}</span>
               </div>
               <Button 
                 variant="outline" 
@@ -519,7 +500,6 @@ const Products = () => {
         </div>
       </div>
 
-      {/* Active Filters */}
       {activeFilters.length > 0 && (
         <div className="mb-6">
           <div className="flex flex-wrap items-center gap-2">
@@ -553,24 +533,23 @@ const Products = () => {
         </div>
       )}
 
-      {/* Products Grid */}
-      <div className="mb-6">
-        {products.length > 0 ? (
+      {products.length > 0 ? (
+        <div className="mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-medium mb-2">No products found</h3>
-            <p className="text-muted-foreground mb-4">
-              Try adjusting your search or filter criteria.
-            </p>
-            <Button onClick={clearAllFilters}>Clear All Filters</Button>
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium mb-2">No products found</h3>
+          <p className="text-muted-foreground mb-4">
+            Try adjusting your search or filter criteria.
+          </p>
+          <Button onClick={clearAllFilters}>Clear All Filters</Button>
+        </div>
+      )}
     </div>
   );
 };
