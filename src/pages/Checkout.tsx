@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { 
-  CreditCard, 
   Check,
   AlertCircle,
   Lock
@@ -42,21 +42,9 @@ const checkoutSchema = z.object({
   state: z.string().min(2, { message: 'State is required' }),
   zipCode: z.string().min(5, { message: 'ZIP Code is required' }),
   country: z.string().min(2, { message: 'Country is required' }),
-  paymentMethod: z.enum(['credit_card', 'paypal']),
-  cardNumber: z.string().optional(),
-  cardName: z.string().optional(),
-  cardExpiry: z.string().optional(),
-  cardCvv: z.string().optional(),
+  paymentMethod: z.enum(['cod']),
   saveInformation: z.boolean().optional(),
   sameAsShipping: z.boolean().optional(),
-}).refine((data) => {
-  if (data.paymentMethod === 'credit_card') {
-    return !!data.cardNumber && !!data.cardName && !!data.cardExpiry && !!data.cardCvv;
-  }
-  return true;
-}, {
-  message: 'Credit card information is required',
-  path: ['cardNumber'],
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
@@ -66,7 +54,6 @@ const Checkout = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'paypal'>('credit_card');
 
   const taxRate = 0.18; // 18% GST for India
   const estimatedTax = subtotal * taxRate;
@@ -92,19 +79,14 @@ const Checkout = () => {
       city: '',
       state: '',
       zipCode: '',
-      country: 'US',
-      paymentMethod: 'credit_card',
+      country: 'IN',
+      paymentMethod: 'cod',
       saveInformation: false,
       sameAsShipping: false,
     },
   });
 
-  const watchPaymentMethod = form.watch('paymentMethod');
   const watchSameAsShipping = form.watch('sameAsShipping');
-
-  useEffect(() => {
-    setPaymentMethod(watchPaymentMethod);
-  }, [watchPaymentMethod]);
 
   useEffect(() => {
     if (items.length === 0) {
@@ -127,6 +109,28 @@ const Checkout = () => {
       console.log('Order submitted:', data);
       console.log('Order items:', items);
       console.log('Order total:', total);
+      
+      // Save order to the user's order history
+      const existingOrders = JSON.parse(localStorage.getItem(`orders_${user?.id}`) || '[]');
+      const newOrder = {
+        id: `ORD${Date.now()}`,
+        date: new Date().toISOString(),
+        items: items,
+        total: total,
+        status: 'Processing',
+        shipping: {
+          name: `${data.firstName} ${data.lastName}`,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+          country: data.country,
+        },
+        paymentMethod: 'Cash on Delivery'
+      };
+      
+      existingOrders.push(newOrder);
+      localStorage.setItem(`orders_${user?.id}`, JSON.stringify(existingOrders));
       
       toast.success('Your order has been placed successfully!');
       
@@ -244,7 +248,7 @@ const Checkout = () => {
                       <FormItem>
                         <FormLabel>City</FormLabel>
                         <FormControl>
-                          <Input placeholder="New York" {...field} />
+                          <Input placeholder="Mumbai" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -258,7 +262,7 @@ const Checkout = () => {
                       <FormItem>
                         <FormLabel>State</FormLabel>
                         <FormControl>
-                          <Input placeholder="NY" {...field} />
+                          <Input placeholder="Maharashtra" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -270,9 +274,9 @@ const Checkout = () => {
                     name="zipCode"
                     render={({ field }) => (
                       <FormItem className="md:col-span-1">
-                        <FormLabel>ZIP Code</FormLabel>
+                        <FormLabel>PIN Code</FormLabel>
                         <FormControl>
-                          <Input placeholder="10001" {...field} />
+                          <Input placeholder="400001" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -297,9 +301,7 @@ const Checkout = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="US">United States</SelectItem>
-                            <SelectItem value="CA">Canada</SelectItem>
-                            <SelectItem value="UK">United Kingdom</SelectItem>
+                            <SelectItem value="IN">India</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -384,21 +386,21 @@ const Checkout = () => {
                       <FormItem>
                         <FormLabel>City</FormLabel>
                         <FormControl>
-                          <Input placeholder="New York" />
+                          <Input placeholder="Mumbai" />
                         </FormControl>
                       </FormItem>
                       
                       <FormItem>
                         <FormLabel>State</FormLabel>
                         <FormControl>
-                          <Input placeholder="NY" />
+                          <Input placeholder="Maharashtra" />
                         </FormControl>
                       </FormItem>
                       
                       <FormItem className="md:col-span-1">
-                        <FormLabel>ZIP Code</FormLabel>
+                        <FormLabel>PIN Code</FormLabel>
                         <FormControl>
-                          <Input placeholder="10001" />
+                          <Input placeholder="400001" />
                         </FormControl>
                       </FormItem>
                     </div>
@@ -418,32 +420,18 @@ const Checkout = () => {
                         <div className="flex items-center space-x-2">
                           <input
                             type="radio"
-                            id="credit-card"
-                            value="credit_card"
-                            checked={field.value === 'credit_card'}
-                            onChange={() => field.onChange('credit_card')}
+                            id="cod"
+                            value="cod"
+                            checked={true}
                             className="h-4 w-4 text-primary focus:ring-primary rounded-full"
+                            readOnly
                           />
-                          <label htmlFor="credit-card" className="flex items-center">
-                            <CreditCard className="h-5 w-5 mr-2" />
-                            Credit Card
-                          </label>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="paypal"
-                            value="paypal"
-                            checked={field.value === 'paypal'}
-                            onChange={() => field.onChange('paypal')}
-                            className="h-4 w-4 text-primary focus:ring-primary rounded-full"
-                          />
-                          <label htmlFor="paypal" className="flex items-center">
-                            <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.217a.641.641 0 0 1 .632-.544h6.964c2.297 0 3.947.861 4.691 2.485.32.697.406 1.433.281 2.23-.013.082-.026.165-.042.251.4-.158.838-.267 1.311-.32.105-.011.21-.02.316-.023.44-.012.886.022 1.33.103.98.178 1.847.574 2.506 1.224.654.644 1.067 1.501 1.208 2.604.134 1.048.006 2.242-.7 3.247-.61.866-1.558 1.56-2.744 2.013-1.14.435-2.466.636-3.886.636h-.53c-.443 0-.865.19-1.159.523-.295.333-.424.776-.357 1.213l.066.374.264 1.663.008.049c.055.346-.081.705-.363.95-.284.243-.665.377-1.057.377H7.076Zm6.303-12.46c-.022.142-.044.286-.07.441-.53 3.308-2.347 4.443-4.65 4.443H6.611a.641.641 0 0 0-.633.74l1.107 7.011h3.991c.267 0 .5-.19.549-.453l.023-.117.43-2.73.28-.153a.551.551 0 0 1 .542-.456h.341c2.2 0 3.921-.893 4.425-3.475.21-1.084.1-1.99-.455-2.626-.286-.328-.645-.563-1.07-.722.07-.421.06-.841-.033-1.267-.315-1.458-1.892-1.958-3.673-1.958H6.42L3.318 20.597h3.98a.641.641 0 0 0 .633-.544L9.66 8.876h3.72c.922 0 1.75.19 2 1.224.028.112.047.232.06.359L13.38 8.876Z" />
+                          <label htmlFor="cod" className="flex items-center">
+                            <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
-                            PayPal
+                            Cash on Delivery
                           </label>
                         </div>
                       </div>
@@ -451,73 +439,11 @@ const Checkout = () => {
                     </FormItem>
                   )}
                 />
-                
-                {paymentMethod === 'credit_card' && (
-                  <div className="space-y-6 mt-6">
-                    <FormField
-                      control={form.control}
-                      name="cardNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Card Number</FormLabel>
-                          <FormControl>
-                            <Input placeholder="1234 5678 9012 3456" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="cardName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name on Card</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John Doe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="grid grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="cardExpiry"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Expiration Date (MM/YY)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="MM/YY" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="cardCvv"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>CVV</FormLabel>
-                            <FormControl>
-                              <Input placeholder="123" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                )}
 
                 <div className="flex items-center mt-6 bg-muted/30 p-4 rounded-lg">
                   <Lock className="h-5 w-5 text-muted-foreground mr-2" />
                   <p className="text-sm text-muted-foreground">
-                    All transactions are secure and encrypted. Your payment information is never stored.
+                    Pay with cash when your order is delivered to your doorstep.
                   </p>
                 </div>
               </div>
@@ -582,7 +508,7 @@ const Checkout = () => {
                 <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Estimated Tax</span>
+                <span className="text-muted-foreground">GST (18%)</span>
                 <span>{formatCurrency(estimatedTax)}</span>
               </div>
               <div className="flex justify-between">
