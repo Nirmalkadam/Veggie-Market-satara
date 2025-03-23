@@ -96,10 +96,19 @@ const Profile = () => {
       });
     }
 
-    // Load user orders
-    const savedOrders = localStorage.getItem(`orders_${user?.id}`);
-    if (savedOrders) {
-      setUserOrders(JSON.parse(savedOrders));
+    // Load ALL orders from localStorage
+    const allOrdersStr = localStorage.getItem('orders');
+    if (allOrdersStr) {
+      try {
+        const allOrders = JSON.parse(allOrdersStr);
+        // Filter orders to show only those belonging to the current user
+        const filteredOrders = allOrders.filter((order: any) => 
+          order.userId === user?.id || order.user?.id === user?.id
+        );
+        setUserOrders(filteredOrders);
+      } catch (error) {
+        console.error('Failed to parse orders:', error);
+      }
     }
   }, [isAuthenticated, navigate, user, form]);
 

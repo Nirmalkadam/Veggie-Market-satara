@@ -13,6 +13,7 @@ import {
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { cn, formatCurrency } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
 interface ProductCardProps {
   product: Product;
@@ -21,6 +22,7 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, featured = false }: ProductCardProps) => {
   const { addItem } = useCart();
+  const { user } = useAuth();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -28,6 +30,9 @@ const ProductCard = ({ product, featured = false }: ProductCardProps) => {
     e.stopPropagation();
     addItem(product, 1);
   };
+
+  // Check if the current user is an admin
+  const isAdmin = user?.isAdmin || false;
 
   return (
     <div 
@@ -127,14 +132,17 @@ const ProductCard = ({ product, featured = false }: ProductCardProps) => {
             <span className="text-sm text-muted-foreground capitalize">
               {product.category}
             </span>
-            <Button 
-              onClick={handleAddToCart}
-              size="sm" 
-              className="group-hover:opacity-100 opacity-80 transition-opacity"
-            >
-              <ShoppingCart className="h-4 w-4 mr-1" />
-              Add
-            </Button>
+            {/* Only show the "Add to Cart" button for non-admin users */}
+            {!isAdmin && (
+              <Button 
+                onClick={handleAddToCart}
+                size="sm" 
+                className="group-hover:opacity-100 opacity-80 transition-opacity"
+              >
+                <ShoppingCart className="h-4 w-4 mr-1" />
+                Add
+              </Button>
+            )}
           </div>
         </div>
       </Link>
