@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { Product, CartItem, CartItems } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 
 interface CartContextType {
   items: CartItems;
@@ -17,24 +18,41 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItems>([]);
+  const { user } = useAuth();
+  
+  // Get the current user's ID or use 'guest' for non-logged in users
+  const currentUserId = user?.id || 'guest';
 
-  // Load cart from localStorage on initial render
+  // Load cart from localStorage on initial render or when user changes
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        setItems(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Failed to parse saved cart:', error);
-        localStorage.removeItem('cart');
+    const loadCart = () => {
+      const cartKey = `cart_${currentUserId}`;
+      const savedCart = localStorage.getItem(cartKey);
+      
+      if (savedCart) {
+        try {
+          setItems(JSON.parse(savedCart));
+        } catch (error) {
+          console.error('Failed to parse saved cart:', error);
+          localStorage.removeItem(cartKey);
+          setItems([]);
+        }
+      } else {
+        // Reset cart when switching users or on first load
+        setItems([]);
       }
-    }
-  }, []);
+    };
+    
+    loadCart();
+  }, [currentUserId]);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
-  }, [items]);
+    if (items.length > 0) {
+      const cartKey = `cart_${currentUserId}`;
+      localStorage.setItem(cartKey, JSON.stringify(items));
+    }
+  }, [items, currentUserId]);
 
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
   
@@ -70,7 +88,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (itemToRemove) {
         toast.success(`Removed ${itemToRemove.product.name} from cart`);
       }
-      return prevItems.filter(item => item.product.id !== productId);
+      
+      const updatedItems = prevItems.filter(item => item.product.id !== productId);
+      
+      // If cart becomes empty, remove it from localStorage
+      if (updatedItems.length === 0) {
+        localStorage.removeItem(`cart_${currentUserId}`);
+      }
+      
+      return updatedItems;
     });
   };
 
@@ -91,6 +117,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const clearCart = () => {
     setItems([]);
+    localStorage.removeItem(`cart_${currentUserId}`);
     toast.success('Cart cleared');
   };
 

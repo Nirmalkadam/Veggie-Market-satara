@@ -127,6 +127,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
+    // Clear the current user's cart when logging out
+    if (user) {
+      localStorage.removeItem(`cart_${user.id}`);
+    }
+    
     setUser(null);
     localStorage.removeItem('user');
     toast.success('You have been logged out.');
