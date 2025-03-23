@@ -26,6 +26,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Load cart from localStorage on initial render or when user changes
   useEffect(() => {
     const loadCart = () => {
+      // Always reset the cart state first when user changes
+      setItems([]);
+      
+      // Admin users should never see any cart items
+      if (user?.isAdmin) return;
+      
       const cartKey = `cart_${currentUserId}`;
       const savedCart = localStorage.getItem(cartKey);
       
@@ -35,24 +41,27 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } catch (error) {
           console.error('Failed to parse saved cart:', error);
           localStorage.removeItem(cartKey);
-          setItems([]);
         }
-      } else {
-        // Reset cart when switching users or on first load
-        setItems([]);
       }
     };
     
     loadCart();
-  }, [currentUserId]);
+  }, [currentUserId, user?.isAdmin]);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
+    // Don't save cart for admin users
+    if (user?.isAdmin) return;
+    
+    const cartKey = `cart_${currentUserId}`;
+    
     if (items.length > 0) {
-      const cartKey = `cart_${currentUserId}`;
       localStorage.setItem(cartKey, JSON.stringify(items));
+    } else {
+      // Remove the cart entry if it's empty
+      localStorage.removeItem(cartKey);
     }
-  }, [items, currentUserId]);
+  }, [items, currentUserId, user?.isAdmin]);
 
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
   
@@ -62,6 +71,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 
   const addItem = (product: Product, quantity = 1) => {
+    // Prevent admin users from adding items
+    if (user?.isAdmin) {
+      toast.error("Admin users cannot add items to cart");
+      return;
+    }
+    
     setItems(prevItems => {
       const existingItem = prevItems.find(item => item.product.id === product.id);
       
@@ -89,14 +104,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toast.success(`Removed ${itemToRemove.product.name} from cart`);
       }
       
-      const updatedItems = prevItems.filter(item => item.product.id !== productId);
-      
-      // If cart becomes empty, remove it from localStorage
-      if (updatedItems.length === 0) {
-        localStorage.removeItem(`cart_${currentUserId}`);
-      }
-      
-      return updatedItems;
+      return prevItems.filter(item => item.product.id !== productId);
     });
   };
 

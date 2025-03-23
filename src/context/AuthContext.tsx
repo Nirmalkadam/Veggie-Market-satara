@@ -127,10 +127,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-    // Clear the current user's cart when logging out
+    // Clear all cart data for the current user 
     if (user) {
       localStorage.removeItem(`cart_${user.id}`);
     }
+    
+    // Also clear guest cart data if any exists
+    localStorage.removeItem('cart_guest');
     
     setUser(null);
     localStorage.removeItem('user');
