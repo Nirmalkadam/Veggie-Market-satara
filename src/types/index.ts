@@ -54,3 +54,23 @@ export interface SearchFilters {
   maxPrice?: number;
   organic?: boolean;
 }
+
+export interface WebsiteSettings {
+  siteName: string;
+  logo: string;
+  currency: string;
+  currencySymbol: string;
+  contactEmail: string;
+  contactPhone: string;
+  address: string;
+  socialLinks: {
+    facebook: string;
+    instagram: string;
+    twitter: string;
+  };
+  features: {
+    enableCOD: boolean;
+    enableOnlinePayment: boolean;
+    enableReviews: boolean;
+  };
+}
