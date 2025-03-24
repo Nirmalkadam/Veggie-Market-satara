@@ -168,38 +168,6 @@ const Login = () => {
             </Link>
           </p>
         </div>
-
-        <div className="mt-10 relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border"></div>
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">
-              Demo accounts
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-6 space-y-3">
-          <div className="rounded-md border border-border p-3">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm font-medium">Admin User</p>
-                <p className="text-xs text-muted-foreground">admin@veggiemarket.com</p>
-              </div>
-              <p className="text-xs text-muted-foreground">Password: admin123</p>
-            </div>
-          </div>
-          <div className="rounded-md border border-border p-3">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-sm font-medium">Customer</p>
-                <p className="text-xs text-muted-foreground">user@example.com</p>
-              </div>
-              <p className="text-xs text-muted-foreground">Password: user123</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
