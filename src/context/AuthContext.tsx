@@ -98,6 +98,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoading(true);
     
     try {
+      // Special handling for admin account - no email confirmation required
+      if (email === 'admin@veggiemarket.com') {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) {
+          // For admin, if there's an error that's not about confirmation, just throw it
+          throw error;
+        }
+        
+        toast.success(`Welcome back, Admin!`);
+        return;
+      }
+      
+      // Regular user login flow with email confirmation handling
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -130,6 +147,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoading(true);
     
     try {
+      // Special handling for admin registration - auto-confirm
+      if (email === 'admin@veggiemarket.com') {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name,
+            },
+          },
+        });
+        
+        if (error) {
+          throw error;
+        }
+        
+        // For admin account, log them in immediately after registration
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        toast.success('Admin account created and logged in successfully!');
+        return;
+      }
+      
+      // Regular user registration with email confirmation
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
