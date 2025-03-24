@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -888,4 +889,688 @@ const Admin = () => {
                         <TableCell>{user.name}</TableCell>
                         <TableCell>
                           <div className="flex items-center">
-                            <Mail className="h-4 w-4 mr-2 text-
+                            <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                            {user.email}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${user.isAdmin ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {user.isAdmin ? 'Admin' : 'Customer'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-medium">{userOrderCount}</span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+            
+            {/* User Pagination */}
+            {filteredUsers.length > 0 && (
+              <div className="flex justify-between items-center mt-6">
+                <div className="text-sm text-muted-foreground">
+                  Showing {userIndexOfFirstItem + 1} to {Math.min(userIndexOfLastItem, filteredUsers.length)} of {filteredUsers.length} users
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={userCurrentPage === 1}
+                    onClick={() => setUserCurrentPage(userCurrentPage - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {Array.from({ length: userTotalPages }, (_, i) => i + 1).map((page) => (
+                    <Button 
+                      key={page}
+                      variant={userCurrentPage === page ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => setUserCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={userCurrentPage === userTotalPages}
+                    onClick={() => setUserCurrentPage(userCurrentPage + 1)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+        
+        {/* Reports Tab */}
+        <TabsContent value="reports">
+          <div className="bg-card border border-border rounded-xl p-6">
+            <h2 className="text-xl font-medium mb-6">Reports &amp; Analytics</h2>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="border rounded-lg p-4">
+                <h3 className="text-lg font-medium mb-4">Monthly Revenue</h3>
+                {/* Chart would go here in a real implementation */}
+                <div className="h-64 bg-muted/20 rounded flex items-center justify-center">
+                  <p className="text-muted-foreground">Revenue chart placeholder</p>
+                </div>
+              </div>
+              
+              <div className="border rounded-lg p-4">
+                <h3 className="text-lg font-medium mb-4">Product Categories</h3>
+                {/* Chart would go here in a real implementation */}
+                <div className="h-64 bg-muted/20 rounded flex items-center justify-center">
+                  <p className="text-muted-foreground">Categories chart placeholder</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+        
+        {/* Settings Tab */}
+        <TabsContent value="settings">
+          <div className="bg-card border border-border rounded-xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-medium">Store Settings</h2>
+              <Button onClick={openSettingsDialog}>
+                <Settings className="h-4 w-4 mr-2" />
+                Edit Settings
+              </Button>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="border rounded-lg p-4">
+                <h3 className="text-lg font-medium mb-4">Store Information</h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Store Name</p>
+                    <p className="font-medium">{settings.siteName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <div className="flex items-center">
+                      <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <p>{settings.contactEmail}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <div className="flex items-center">
+                      <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <p>{settings.contactPhone}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Address</p>
+                    <p>{settings.address}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="border rounded-lg p-4">
+                <h3 className="text-lg font-medium mb-4">Payment Settings</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center">
+                    <div className={`h-4 w-4 rounded-full mr-2 ${settings.features.enableCOD ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <p>Cash on Delivery</p>
+                  </div>
+                  <div className="flex items-center">
+                    <div className={`h-4 w-4 rounded-full mr-2 ${settings.features.enableOnlinePayment ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <p>Online Payments</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Currency</p>
+                    <p className="font-medium">{settings.currency} ({settings.currencySymbol})</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+      
+      {/* Product Create Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Add New Product</DialogTitle>
+            <DialogDescription>
+              Fill out the form below to add a new product to your catalog.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Product Name</Label>
+                <Input
+                  id="name"
+                  value={newProduct.name}
+                  onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Select
+                  value={newProduct.category}
+                  onValueChange={(value) => setNewProduct({ ...newProduct, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categoryOptions.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category.charAt(0).toUpperCase() + category.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={newProduct.description}
+                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="price">Price (INR)</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  value={newProduct.price}
+                  onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="stock">Stock</Label>
+                <Input
+                  id="stock"
+                  type="number"
+                  value={newProduct.stock}
+                  onChange={(e) => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) })}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="unit">Unit</Label>
+                <Select
+                  value={newProduct.unit}
+                  onValueChange={(value) => setNewProduct({ ...newProduct, unit: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unitOptions.map((unit) => (
+                      <SelectItem key={unit} value={unit}>
+                        {unit}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="image">Image URL</Label>
+                <Input
+                  id="image"
+                  value={newProduct.image}
+                  onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="organic"
+                checked={newProduct.organic}
+                onCheckedChange={(checked) => 
+                  setNewProduct({ ...newProduct, organic: checked === true })
+                }
+              />
+              <Label htmlFor="organic">Mark as Organic</Label>
+            </div>
+            
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateProduct}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Product
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Product Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          {editingProduct && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Edit Product</DialogTitle>
+                <DialogDescription>
+                  Update product details.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-name">Product Name</Label>
+                    <Input
+                      id="edit-name"
+                      value={editingProduct.name}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-category">Category</Label>
+                    <Select
+                      value={editingProduct.category}
+                      onValueChange={(value) => setEditingProduct({ ...editingProduct, category: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoryOptions.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category.charAt(0).toUpperCase() + category.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={editingProduct.description}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-price">Price (INR)</Label>
+                    <Input
+                      id="edit-price"
+                      type="number"
+                      value={editingProduct.price}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-stock">Stock</Label>
+                    <Input
+                      id="edit-stock"
+                      type="number"
+                      value={editingProduct.stock}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, stock: parseInt(e.target.value) })}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-unit">Unit</Label>
+                    <Select
+                      value={editingProduct.unit}
+                      onValueChange={(value) => setEditingProduct({ ...editingProduct, unit: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {unitOptions.map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {unit}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-image">Image URL</Label>
+                    <Input
+                      id="edit-image"
+                      value={editingProduct.image}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, image: e.target.value })}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="edit-organic"
+                    checked={editingProduct.organic}
+                    onCheckedChange={(checked) => 
+                      setEditingProduct({ ...editingProduct, organic: checked === true })
+                    }
+                  />
+                  <Label htmlFor="edit-organic">Mark as Organic</Label>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateProduct}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Product Delete Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          {productToDelete && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Delete Product</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this product? This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="py-4 flex items-center gap-4 border rounded-lg p-4">
+                <div className="h-16 w-16 rounded-md overflow-hidden bg-accent/30">
+                  <img 
+                    src={productToDelete.image} 
+                    alt={productToDelete.name} 
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="font-medium">{productToDelete.name}</p>
+                  <p className="text-sm text-muted-foreground">{formatCurrency(productToDelete.price)} · {productToDelete.category}</p>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={handleDeleteProduct}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Product
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Order Edit Dialog */}
+      <Dialog open={isOrderEditDialogOpen} onOpenChange={setIsOrderEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          {editingOrder && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Order #{editingOrder.id}</DialogTitle>
+                <DialogDescription>
+                  View and update order details.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="grid gap-6 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Customer</p>
+                    <p className="font-medium">{editingOrder.user.name}</p>
+                    <p className="text-sm">{editingOrder.user.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Order Date</p>
+                    <p className="font-medium">{formatDate(editingOrder.createdAt)}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Shipping Address</p>
+                  <div className="bg-muted/20 p-3 rounded">
+                    <p>{editingOrder.user.name}</p>
+                    <p>{editingOrder.address.street}</p>
+                    <p>{editingOrder.address.city}, {editingOrder.address.state} {editingOrder.address.zipCode}</p>
+                    <p>{editingOrder.address.country}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Order Items</p>
+                  <div className="border rounded overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Product</TableHead>
+                          <TableHead>Quantity</TableHead>
+                          <TableHead>Price</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {editingOrder.items.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 rounded overflow-hidden bg-accent/30">
+                                  <img 
+                                    src={item.product.image} 
+                                    alt={item.product.name} 
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                                <span>{item.product.name}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>{item.quantity}</TableCell>
+                            <TableCell>{formatCurrency(item.product.price * item.quantity)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="flex justify-end mt-2">
+                    <div className="text-right">
+                      <div className="flex justify-between gap-8 border-t pt-2">
+                        <p className="font-medium">Total:</p>
+                        <p className="font-bold">{formatCurrency(editingOrder.total)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="order-status">Order Status</Label>
+                  <Select
+                    value={editingOrder.status}
+                    onValueChange={(value: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled') => 
+                      setEditingOrder({ ...editingOrder, status: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {orderStatusOptions.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsOrderEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateOrder}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Update Order
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Settings Dialog */}
+      <Dialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Website Settings</DialogTitle>
+            <DialogDescription>
+              Update store settings and preferences.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="site-name">Store Name</Label>
+                <Input
+                  id="site-name"
+                  value={settings.siteName}
+                  onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency</Label>
+                <Select
+                  value={settings.currency}
+                  onValueChange={(value) => setSettings({ ...settings, currency: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="INR">Indian Rupee (INR)</SelectItem>
+                    <SelectItem value="USD">US Dollar (USD)</SelectItem>
+                    <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="contact-email">Contact Email</Label>
+                <Input
+                  id="contact-email"
+                  value={settings.contactEmail}
+                  onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact-phone">Contact Phone</Label>
+                <Input
+                  id="contact-phone"
+                  value={settings.contactPhone}
+                  onChange={(e) => setSettings({ ...settings, contactPhone: e.target.value })}
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Textarea
+                id="address"
+                value={settings.address}
+                onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+              />
+            </div>
+            
+            <div className="space-y-3">
+              <Label>Features</Label>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="enable-cod"
+                  checked={settings.features.enableCOD}
+                  onCheckedChange={(checked) => 
+                    setSettings({ 
+                      ...settings, 
+                      features: { 
+                        ...settings.features, 
+                        enableCOD: checked === true 
+                      } 
+                    })
+                  }
+                />
+                <Label htmlFor="enable-cod">Enable Cash on Delivery</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="enable-online"
+                  checked={settings.features.enableOnlinePayment}
+                  onCheckedChange={(checked) => 
+                    setSettings({ 
+                      ...settings, 
+                      features: { 
+                        ...settings.features, 
+                        enableOnlinePayment: checked === true 
+                      } 
+                    })
+                  }
+                />
+                <Label htmlFor="enable-online">Enable Online Payments</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="enable-reviews"
+                  checked={settings.features.enableReviews}
+                  onCheckedChange={(checked) => 
+                    setSettings({ 
+                      ...settings, 
+                      features: { 
+                        ...settings.features, 
+                        enableReviews: checked === true 
+                      } 
+                    })
+                  }
+                />
+                <Label htmlFor="enable-reviews">Enable Product Reviews</Label>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsSettingsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateSettings}>
+              <Save className="h-4 w-4 mr-2" />
+              Save Settings
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default Admin;
