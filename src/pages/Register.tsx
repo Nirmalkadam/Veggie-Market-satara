@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, UserPlus, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -16,7 +16,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
-import { toast } from 'sonner';
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
@@ -29,11 +28,6 @@ const registerSchema = z.object({
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
-
-// Admin credentials
-const ADMIN_EMAIL = 'admin@veggiemarket.com';
-const ADMIN_PASSWORD = 'admin123456';
-const ADMIN_NAME = 'Admin User';
 
 const Register = () => {
   const { register, loading } = useAuth();
@@ -58,21 +52,6 @@ const Register = () => {
     } catch (error) {
       // Error is displayed by the auth context
       console.error('Registration failed:', error);
-    }
-  };
-
-  const handleAdminRegister = async () => {
-    try {
-      await register(ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME);
-      toast.success('Admin account created successfully!');
-      navigate('/');
-    } catch (error: any) {
-      if (error.message?.includes('User already registered')) {
-        toast.error('Admin account already exists. Try logging in instead.');
-      } else {
-        toast.error(error.message || 'Failed to create admin account');
-      }
-      console.error('Admin registration failed:', error);
     }
   };
 
@@ -239,18 +218,6 @@ const Register = () => {
             </Button>
           </form>
         </Form>
-
-        <div className="mt-4">
-          <Button 
-            type="button"
-            variant="outline"
-            className="w-full border-primary text-primary"
-            onClick={handleAdminRegister}
-          >
-            <ShieldCheck className="mr-2 h-4 w-4" />
-            Create Admin Account
-          </Button>
-        </div>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">

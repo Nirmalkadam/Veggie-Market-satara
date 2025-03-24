@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, LogIn, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -25,10 +25,6 @@ const loginSchema = z.object({
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
-
-// Admin credentials
-const ADMIN_EMAIL = 'admin@veggiemarket.com';
-const ADMIN_PASSWORD = 'admin123456';
 
 const Login = () => {
   const { login, loading } = useAuth();
@@ -56,19 +52,6 @@ const Login = () => {
       if (error.message?.includes('confirm your account')) {
         setEmailConfirmationSent(true);
       }
-    }
-  };
-
-  const handleAdminLogin = async () => {
-    form.setValue('email', ADMIN_EMAIL);
-    form.setValue('password', ADMIN_PASSWORD);
-    
-    try {
-      await login(ADMIN_EMAIL, ADMIN_PASSWORD);
-      navigate('/');
-    } catch (error: any) {
-      console.error('Admin login failed:', error);
-      toast.error('Admin login failed. Make sure the admin account exists.');
     }
   };
 
@@ -190,18 +173,6 @@ const Login = () => {
             </Button>
           </form>
         </Form>
-        
-        <div className="mt-4">
-          <Button 
-            type="button"
-            variant="outline"
-            className="w-full border-primary text-primary"
-            onClick={handleAdminLogin}
-          >
-            <ShieldCheck className="mr-2 h-4 w-4" />
-            Login as Admin
-          </Button>
-        </div>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">
