@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { User } from '@/types';
@@ -11,6 +10,7 @@ interface AuthContextType {
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
   updateUserProfile: (userData: Partial<User>) => void;
+  getAllUsers: () => User[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -101,11 +101,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: `${MOCK_USERS.length + 1}`,
         email,
         name,
+        password,
         isAdmin: false,
       };
       
-      setUser(newUser);
-      localStorage.setItem('user', JSON.stringify(newUser));
+      // Add the new user to MOCK_USERS array for admin panel display
+      MOCK_USERS.push(newUser);
+      
+      // Omit password before saving to state
+      const { password: _, ...userWithoutPassword } = newUser;
+      
+      setUser(userWithoutPassword);
+      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
       
       toast.success('Registration successful! Welcome aboard.');
     } catch (error) {
@@ -140,6 +147,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success('You have been logged out.');
   };
 
+  const getAllUsers = () => {
+    // Return users without passwords
+    return MOCK_USERS.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -150,6 +162,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         register,
         logout,
         updateUserProfile,
+        getAllUsers,
       }}
     >
       {children}
