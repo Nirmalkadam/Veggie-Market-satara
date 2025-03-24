@@ -104,6 +104,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       
       if (error) {
+        if (error.message === 'Email not confirmed') {
+          // If email not confirmed, send another confirmation email
+          await supabase.auth.resend({
+            type: 'signup',
+            email,
+          });
+          
+          throw new Error('Please check your email to confirm your account. We\'ve sent a new confirmation link.');
+        }
+        
         throw error;
       }
       
@@ -134,7 +144,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw error;
       }
       
-      toast.success('Registration successful! Welcome aboard.');
+      toast.success('Registration successful! Please check your email to confirm your account.');
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
       throw error;

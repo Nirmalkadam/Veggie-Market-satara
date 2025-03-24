@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -29,6 +30,7 @@ const Login = () => {
   const { login, loading } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -43,9 +45,13 @@ const Login = () => {
     try {
       await login(data.email, data.password);
       navigate('/');
-    } catch (error) {
-      // Error is displayed by the auth context
+    } catch (error: any) {
       console.error('Login failed:', error);
+      
+      // Check if the error message contains confirmation instructions
+      if (error.message?.includes('confirm your account')) {
+        setEmailConfirmationSent(true);
+      }
     }
   };
 
@@ -58,6 +64,14 @@ const Login = () => {
             Log in to your account to continue
           </p>
         </div>
+
+        {emailConfirmationSent && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-md mb-6">
+            <p className="text-sm">
+              A confirmation email has been sent. Please check your inbox and click the link to verify your account.
+            </p>
+          </div>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
