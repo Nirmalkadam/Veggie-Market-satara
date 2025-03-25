@@ -26,6 +26,10 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+// Admin credentials - defined in AuthContext for consistency
+const ADMIN_EMAIL = 'admin@veggiemarket.com';
+const ADMIN_PASSWORD = 'admin123456';
+
 const Login = () => {
   const { login, loading } = useAuth();
   const navigate = useNavigate();
@@ -52,6 +56,19 @@ const Login = () => {
       if (error.message?.includes('confirm your account')) {
         setEmailConfirmationSent(true);
       }
+    }
+  };
+
+  const handleAdminLogin = async () => {
+    try {
+      form.setValue('email', ADMIN_EMAIL);
+      form.setValue('password', ADMIN_PASSWORD);
+      
+      await login(ADMIN_EMAIL, ADMIN_PASSWORD);
+      navigate('/admin');
+    } catch (error: any) {
+      console.error('Admin login failed:', error);
+      toast.error('Admin login failed. Please try again.');
     }
   };
 
@@ -170,6 +187,27 @@ const Login = () => {
                   Log in
                 </span>
               )}
+            </Button>
+            
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-card text-muted-foreground">Quick access</span>
+              </div>
+            </div>
+            
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full bg-amber-50 hover:bg-amber-100 border-amber-200"
+              onClick={handleAdminLogin}
+              disabled={loading}
+            >
+              <span className="flex items-center">
+                Log in as Admin
+              </span>
             </Button>
           </form>
         </Form>

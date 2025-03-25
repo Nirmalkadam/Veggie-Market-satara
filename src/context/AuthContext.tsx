@@ -16,6 +16,9 @@ interface AuthContextType {
   getAllUsers: () => Promise<User[]>;
 }
 
+const ADMIN_EMAIL = 'admin@veggiemarket.com';
+const ADMIN_PASSWORD = 'admin123456';
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -27,6 +30,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change event:', event);
         setSession(session);
         
         if (session?.user) {
@@ -47,7 +51,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               id: session.user.id,
               email: session.user.email || '',
               name: profile?.name || session.user.email?.split('@')[0] || 'User',
-              isAdmin: session.user.email === 'admin@veggiemarket.com', // Temporary admin check
+              isAdmin: session.user.email === ADMIN_EMAIL, // Admin check
             });
           } catch (error) {
             console.error('Error in auth state change:', error);
@@ -78,7 +82,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               id: session.user.id,
               email: session.user.email || '',
               name: profile?.name || session.user.email?.split('@')[0] || 'User',
-              isAdmin: session.user.email === 'admin@veggiemarket.com', // Temporary admin check
+              isAdmin: session.user.email === ADMIN_EMAIL, // Admin check
             });
             
             setSession(session);
@@ -99,14 +103,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     try {
       // Special handling for admin account - no email confirmation required
-      if (email === 'admin@veggiemarket.com') {
+      if (email === ADMIN_EMAIL) {
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         
         if (error) {
-          // For admin, if there's an error that's not about confirmation, just throw it
           throw error;
         }
         
@@ -121,7 +124,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       
       if (error) {
-        if (error.message === 'Email not confirmed') {
+        if (error.message.includes('Email not confirmed')) {
           // If email not confirmed, send another confirmation email
           await supabase.auth.resend({
             type: 'signup',
@@ -148,7 +151,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     try {
       // Special handling for admin registration - auto-confirm
-      if (email === 'admin@veggiemarket.com') {
+      if (email === ADMIN_EMAIL) {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
