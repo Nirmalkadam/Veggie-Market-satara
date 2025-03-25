@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -25,7 +25,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-// Admin credentials - defined in AuthContext for consistency
+// Admin credentials for easy access
 const ADMIN_EMAIL = 'admin@veggiemarket.com';
 const ADMIN_PASSWORD = 'admin123456';
 
@@ -46,6 +46,7 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
+      console.log("Attempting login with:", data.email);
       await login(data.email, data.password);
       navigate('/');
     } catch (error: any) {
@@ -60,6 +61,7 @@ const Login = () => {
 
   const handleAdminLogin = async () => {
     try {
+      console.log("Using admin login with:", ADMIN_EMAIL);
       form.setValue('email', ADMIN_EMAIL);
       form.setValue('password', ADMIN_PASSWORD);
       

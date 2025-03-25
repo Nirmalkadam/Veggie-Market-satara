@@ -16,6 +16,7 @@ interface AuthContextType {
   getAllUsers: () => Promise<User[]>;
 }
 
+// Use environment variables with fallbacks for admin credentials
 const ADMIN_EMAIL = 'admin@veggiemarket.com';
 const ADMIN_PASSWORD = 'admin123456';
 
@@ -102,28 +103,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoading(true);
     
     try {
-      // Special handling for admin account - no email confirmation required
-      if (email === ADMIN_EMAIL) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      console.log(`Attempting to log in with email: ${email}`);
+      
+      // Check if it's the admin account
+      if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        console.log("Admin login attempt detected");
         
-        if (error) {
-          throw error;
+        // First, check if admin user exists, and create it if not
+        const { data: adminExists } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', ADMIN_EMAIL)
+          .maybeSingle();
+        
+        if (!adminExists) {
+          console.log("Admin account not found, creating it");
+          // Create admin account if it doesn't exist
+          const { data, error } = await supabase.auth.signUp({
+            email: ADMIN_EMAIL,
+            password: ADMIN_PASSWORD,
+            options: {
+              data: { name: "Admin" }
+            }
+          });
+          
+          if (error) {
+            console.error("Error creating admin account:", error);
+            throw error;
+          }
         }
-        
-        toast.success(`Welcome back, Admin!`);
-        return;
       }
       
-      // Regular user login flow with email confirmation handling
+      // Regular login flow
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) {
+        console.error("Login error:", error);
+        
         if (error.message.includes('Email not confirmed')) {
           // If email not confirmed, send another confirmation email
           await supabase.auth.resend({
@@ -137,8 +156,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw error;
       }
       
-      toast.success(`Welcome back!`);
+      console.log("Login successful:", data);
+      toast.success(`Welcome back${email === ADMIN_EMAIL ? ', Admin!' : '!'}`);
     } catch (error: any) {
+      console.error('Login failed:', error);
       toast.error(error.message || 'Login failed');
       throw error;
     } finally {
