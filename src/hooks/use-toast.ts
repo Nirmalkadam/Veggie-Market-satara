@@ -1,5 +1,12 @@
 
-import { toast as sonnerToast, Toast, ToastOptions } from "sonner";
+import { toast as sonnerToast } from "sonner";
+
+// Define our own toast types to not rely on sonner's internal types
+type ToastProps = {
+  title?: string;
+  description?: string;
+  variant?: "default" | "destructive";
+};
 
 // Custom toast function that maintains compatibility with both APIs
 export const toast = {
@@ -19,7 +26,7 @@ export const toast = {
   info: (message: string) => sonnerToast.info(message),
   
   // Custom toast for compatibility with the object-style API
-  custom: (props: { title?: string; description?: string; variant?: "default" | "destructive" }) => {
+  custom: (props: ToastProps) => {
     if (props.variant === "destructive") {
       return sonnerToast.error(props.title || "", { description: props.description });
     }

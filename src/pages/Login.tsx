@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -16,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
