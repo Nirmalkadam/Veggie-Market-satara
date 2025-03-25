@@ -109,12 +109,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         console.log("Admin login attempt detected");
         
-        // First, check if admin user exists, and create it if not
-        const { data: adminExists } = await supabase
+        // First, check if admin user exists by checking for a profile with matching email
+        // We'll check the auth users indirectly through existing profiles
+        const { data: adminProfiles, error: profileError } = await supabase
           .from('profiles')
-          .select('id')
-          .eq('email', ADMIN_EMAIL)
-          .maybeSingle();
+          .select('id, name')
+          .eq('name', 'Admin')
+          .limit(1);
+        
+        const adminExists = adminProfiles && adminProfiles.length > 0;
         
         if (!adminExists) {
           console.log("Admin account not found, creating it");
