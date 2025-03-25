@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { User } from '@/types';
@@ -35,28 +34,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setSession(session);
         
         if (session?.user) {
-          try {
-            // Get user profile from profiles table
-            const { data: profile, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            
-            if (error && error.code !== 'PGRST116') {
-              console.error('Error fetching user profile:', error);
-            }
-            
-            // Set user state with combined auth and profile data
-            setUser({
-              id: session.user.id,
-              email: session.user.email || '',
-              name: profile?.name || session.user.email?.split('@')[0] || 'User',
-              isAdmin: session.user.email === ADMIN_EMAIL, // Admin check
-            });
-          } catch (error) {
-            console.error('Error in auth state change:', error);
+          // Get user profile from profiles table
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (error && error.code !== 'PGRST116') {
+            console.error('Error fetching user profile:', error);
           }
+          
+          // Set user state with combined auth and profile data
+          setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            name: profile?.name || session.user.email?.split('@')[0] || 'User',
+            isAdmin: session.user.email === ADMIN_EMAIL, // Admin check
+          });
         } else {
           setUser(null);
         }
@@ -105,22 +100,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log(`Attempting to log in with email: ${email}`);
       
-      // Handle admin login case
-      if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-        console.log("Admin login attempt detected");
+      // Regular login flow for all users (including admin)
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error("Login error:", error);
         
-        // Try to sign in with admin credentials first
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: ADMIN_EMAIL,
-          password: password,
-        });
-        
-        // If login fails, check if we need to create the admin account
-        if (signInError) {
-          console.log("Admin sign-in failed, checking if admin account exists:", signInError.message);
+        // If the user doesn't exist and it's the admin email, try to create the admin account
+        if (error.message.includes('Invalid login credentials') && email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+          console.log("Admin login failed, checking if admin account exists");
           
           // Check if admin account exists by trying to query existing profiles
-          const { data: profileData, error: profileError } = await supabase
+          const { data: profileData } = await supabase
             .from('profiles')
             .select('id, name')
             .eq('name', 'Admin')
@@ -153,24 +147,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (loginError) {
               throw loginError;
             }
+            
+            toast.success('Welcome, Admin!');
+            return;
           } else {
             // Admin exists but password might be wrong
             throw new Error("Admin account exists but password is incorrect");
           }
         }
-        
-        toast.success('Welcome, Admin!');
-        return;
-      }
-      
-      // Regular login flow for non-admin users
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) {
-        console.error("Login error:", error);
         
         if (error.message.includes('Email not confirmed')) {
           // If email not confirmed, send another confirmation email
