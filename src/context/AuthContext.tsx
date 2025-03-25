@@ -105,39 +105,61 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log(`Attempting to log in with email: ${email}`);
       
-      // Check if it's the admin account
+      // Handle admin login case
       if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         console.log("Admin login attempt detected");
         
-        // First, check if admin user exists by checking for a profile with matching email
-        // We'll check the auth users indirectly through existing profiles
-        const { data: adminProfiles, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, name')
-          .eq('name', 'Admin')
-          .limit(1);
+        // Try to sign in with admin credentials first
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: ADMIN_EMAIL,
+          password: password,
+        });
         
-        const adminExists = adminProfiles && adminProfiles.length > 0;
-        
-        if (!adminExists) {
-          console.log("Admin account not found, creating it");
-          // Create admin account if it doesn't exist
-          const { data, error } = await supabase.auth.signUp({
-            email: ADMIN_EMAIL,
-            password: ADMIN_PASSWORD,
-            options: {
-              data: { name: "Admin" }
-            }
-          });
+        // If login fails, check if we need to create the admin account
+        if (signInError) {
+          console.log("Admin sign-in failed, checking if admin account exists:", signInError.message);
           
-          if (error) {
-            console.error("Error creating admin account:", error);
-            throw error;
+          // Check if admin account exists in auth system
+          const { data: userList, error: userListError } = await supabase.auth.admin.listUsers();
+          
+          const adminUserExists = userList?.users.some(u => u.email === ADMIN_EMAIL);
+          
+          if (!adminUserExists) {
+            console.log("Admin account not found, creating it");
+            // Create admin account
+            const { data, error } = await supabase.auth.signUp({
+              email: ADMIN_EMAIL,
+              password: ADMIN_PASSWORD,
+              options: {
+                data: { name: "Admin" }
+              }
+            });
+            
+            if (error) {
+              console.error("Error creating admin account:", error);
+              throw error;
+            }
+            
+            // After creating, try logging in
+            const { error: loginError } = await supabase.auth.signInWithPassword({
+              email: ADMIN_EMAIL,
+              password: ADMIN_PASSWORD,
+            });
+            
+            if (loginError) {
+              throw loginError;
+            }
+          } else {
+            // Admin exists but password might be wrong
+            throw new Error("Admin account exists but password is incorrect");
           }
         }
+        
+        toast.success('Welcome, Admin!');
+        return;
       }
       
-      // Regular login flow
+      // Regular login flow for non-admin users
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -160,7 +182,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       
       console.log("Login successful:", data);
-      toast.success(`Welcome back${email === ADMIN_EMAIL ? ', Admin!' : '!'}`);
+      toast.success(`Welcome back!`);
     } catch (error: any) {
       console.error('Login failed:', error);
       toast.error(error.message || 'Login failed');
