@@ -1034,5 +1034,64 @@ const Admin = () => {
                     <p className="text-sm text-muted-foreground">Email</p>
                     <div className="flex items-center">
                       <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                      {
+                      {settings.contactEmail}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <div className="flex items-center">
+                      <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                      {settings.contactPhone}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Address</p>
+                    <p className="font-medium">{settings.address}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="border rounded-lg p-4">
+                <h3 className="text-lg font-medium mb-4">Payment Settings</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Cash on Delivery</p>
+                      <p className="text-sm text-muted-foreground">Allow customers to pay on delivery</p>
+                    </div>
+                    <div className={`rounded-full w-10 h-6 p-1 ${settings.features.enableCOD ? 'bg-green-500' : 'bg-gray-300'}`}>
+                      <div className={`rounded-full w-4 h-4 bg-white transform transition-transform ${settings.features.enableCOD ? 'translate-x-4' : ''}`}></div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Online Payment</p>
+                      <p className="text-sm text-muted-foreground">Accept credit cards and other payment methods</p>
+                    </div>
+                    <div className={`rounded-full w-10 h-6 p-1 ${settings.features.enableOnlinePayment ? 'bg-green-500' : 'bg-gray-300'}`}>
+                      <div className={`rounded-full w-4 h-4 bg-white transform transition-transform ${settings.features.enableOnlinePayment ? 'translate-x-4' : ''}`}></div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Product Reviews</p>
+                      <p className="text-sm text-muted-foreground">Allow customers to leave reviews on products</p>
+                    </div>
+                    <div className={`rounded-full w-10 h-6 p-1 ${settings.features.enableReviews ? 'bg-green-500' : 'bg-gray-300'}`}>
+                      <div className={`rounded-full w-4 h-4 bg-white transform transition-transform ${settings.features.enableReviews ? 'translate-x-4' : ''}`}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default Admin;
 
