@@ -31,6 +31,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -42,6 +43,7 @@ const Login = () => {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
+    setLoginError(null);
     try {
       console.log("Attempting login with:", data.email);
       await login(data.email, data.password);
@@ -52,6 +54,8 @@ const Login = () => {
       // Check if the error message contains confirmation instructions
       if (error.message?.includes('confirm your account')) {
         setEmailConfirmationSent(true);
+      } else {
+        setLoginError(error.message || 'Login failed. Please check your credentials.');
       }
     }
   };
@@ -71,6 +75,12 @@ const Login = () => {
             <p className="text-sm">
               A confirmation email has been sent. Please check your inbox and click the link to verify your account.
             </p>
+          </div>
+        )}
+
+        {loginError && (
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md mb-6">
+            <p className="text-sm">{loginError}</p>
           </div>
         )}
 

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { User } from '@/types';
@@ -100,77 +101,89 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log(`Attempting to log in with email: ${email}`);
       
-      // Regular login flow for all users (including admin)
+      // Check if this is an admin login attempt
+      const isAdminAttempt = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+      
+      // First try standard login for all users
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) {
-        console.error("Login error:", error);
-        
-        // If the user doesn't exist and it's the admin email, try to create the admin account
-        if (error.message.includes('Invalid login credentials') && email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-          console.log("Admin login failed, checking if admin account exists");
-          
-          // Check if admin account exists by trying to query existing profiles
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('id, name')
-            .eq('name', 'Admin')
-            .maybeSingle();
-          
-          const adminUserExists = !!profileData;
-          
-          if (!adminUserExists) {
-            console.log("Admin account not found, creating it");
-            // Create admin account
-            const { data, error } = await supabase.auth.signUp({
-              email: ADMIN_EMAIL,
-              password: ADMIN_PASSWORD,
-              options: {
-                data: { name: "Admin" }
-              }
-            });
-            
-            if (error) {
-              console.error("Error creating admin account:", error);
-              throw error;
-            }
-            
-            // After creating, try logging in
-            const { error: loginError } = await supabase.auth.signInWithPassword({
-              email: ADMIN_EMAIL,
-              password: ADMIN_PASSWORD,
-            });
-            
-            if (loginError) {
-              throw loginError;
-            }
-            
-            toast.success('Welcome, Admin!');
-            return;
-          } else {
-            // Admin exists but password might be wrong
-            throw new Error("Admin account exists but password is incorrect");
-          }
-        }
-        
-        if (error.message.includes('Email not confirmed')) {
-          // If email not confirmed, send another confirmation email
-          await supabase.auth.resend({
-            type: 'signup',
-            email,
-          });
-          
-          throw new Error('Please check your email to confirm your account. We\'ve sent a new confirmation link.');
-        }
-        
-        throw error;
+      // If login succeeds, we're done
+      if (!error) {
+        console.log("Login successful:", data);
+        toast.success(`Welcome back!`);
+        setLoading(false);
+        return;
       }
       
-      console.log("Login successful:", data);
-      toast.success(`Welcome back!`);
+      // If login fails and it's admin, we may need to create the admin account
+      if (isAdminAttempt && error.message.includes('Invalid login credentials')) {
+        console.log("Admin login failed, checking if admin exists");
+        
+        // Check for existing admin users using email instead of name
+        const { count, error: countError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('name', 'Admin');
+        
+        if (countError) {
+          console.error("Error checking for admin:", countError);
+          throw error; // Use original error
+        }
+        
+        if (count === 0) {
+          console.log("Admin account doesn't exist, creating it");
+          
+          // Create admin account
+          const { data, error: signUpError } = await supabase.auth.signUp({
+            email: ADMIN_EMAIL,
+            password: ADMIN_PASSWORD,
+            options: {
+              data: { name: "Admin" }
+            }
+          });
+          
+          if (signUpError) {
+            console.error("Error creating admin account:", signUpError);
+            throw signUpError;
+          }
+          
+          // Log in with the newly created admin account
+          const { error: loginError } = await supabase.auth.signInWithPassword({
+            email: ADMIN_EMAIL,
+            password: ADMIN_PASSWORD,
+          });
+          
+          if (loginError) {
+            throw loginError;
+          }
+          
+          toast.success('Welcome, Admin!');
+          setLoading(false);
+          return;
+        } else {
+          // Admin exists but password might be wrong
+          toast.error("Admin account exists but password is incorrect");
+          throw new Error("Admin account exists but password is incorrect");
+        }
+      }
+      
+      // Handle other error cases
+      if (error.message.includes('Email not confirmed')) {
+        // If email not confirmed, send another confirmation email
+        await supabase.auth.resend({
+          type: 'signup',
+          email,
+        });
+        
+        throw new Error('Please check your email to confirm your account. We\'ve sent a new confirmation link.');
+      }
+      
+      // For any other errors, just throw the original error
+      throw error;
+      
     } catch (error: any) {
       console.error('Login failed:', error);
       toast.error(error.message || 'Login failed');
@@ -184,15 +197,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoading(true);
     
     try {
-      // Special handling for admin registration - auto-confirm
-      if (email === ADMIN_EMAIL) {
+      // Check if user is trying to register with admin email
+      if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        // First check if admin already exists
+        const { data: userData } = await supabase.auth.signInWithPassword({
+          email: ADMIN_EMAIL,
+          password,
+        });
+        
+        if (userData.user) {
+          toast.error('Admin account already exists. Please login instead.');
+          throw new Error('Admin account already exists');
+        }
+        
+        // If admin doesn't exist, create and auto-login
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: {
-              name,
-            },
+            data: { name: "Admin" },
           },
         });
         
@@ -200,7 +223,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           throw error;
         }
         
-        // For admin account, log them in immediately after registration
+        // For admin account, log them in immediately
         await supabase.auth.signInWithPassword({
           email,
           password,
@@ -211,13 +234,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       
       // Regular user registration with email confirmation
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            name,
-          },
+          data: { name },
         },
       });
       
