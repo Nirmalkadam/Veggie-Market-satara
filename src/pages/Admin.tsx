@@ -397,11 +397,7 @@ const Admin = () => {
   const handleCreateProduct = () => {
     // Validate form
     if (!newProduct.name || !newProduct.description || newProduct.price <= 0 || !newProduct.image) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill out all required fields.",
-        variant: "destructive",
-      });
+      toast.error("Please fill out all required fields.");
       return;
     }
 
@@ -416,10 +412,7 @@ const Admin = () => {
     
     // Close dialog and show success message
     setIsCreateDialogOpen(false);
-    toast({
-      title: "Product Created",
-      description: `${createdProduct.name} has been added to the catalog.`,
-    });
+    toast.success(`${createdProduct.name} has been added to the catalog.`);
   };
 
   const openEditDialog = (product: Product) => {
@@ -432,11 +425,7 @@ const Admin = () => {
 
     // Validate form
     if (!editingProduct.name || !editingProduct.description || editingProduct.price <= 0 || !editingProduct.image) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill out all required fields.",
-        variant: "destructive",
-      });
+      toast.error("Please fill out all required fields.");
       return;
     }
 
@@ -445,10 +434,7 @@ const Admin = () => {
     
     // Close dialog and show success message
     setIsEditDialogOpen(false);
-    toast({
-      title: "Product Updated",
-      description: `${editingProduct.name} has been updated.`,
-    });
+    toast.success(`${editingProduct.name} has been updated.`);
   };
 
   const openDeleteDialog = (product: Product) => {
@@ -464,10 +450,7 @@ const Admin = () => {
     
     // Close dialog and show success message
     setIsDeleteDialogOpen(false);
-    toast({
-      title: "Product Deleted",
-      description: `${productToDelete.name} has been removed from the catalog.`,
-    });
+    toast.success(`${productToDelete.name} has been removed from the catalog.`);
   };
 
   const openOrderEditDialog = (order: Order) => {
@@ -483,10 +466,7 @@ const Admin = () => {
     
     // Close dialog and show success message
     setIsOrderEditDialogOpen(false);
-    toast({
-      title: "Order Updated",
-      description: `Order #${editingOrder.id} status updated to ${editingOrder.status}.`,
-    });
+    toast.success(`Order #${editingOrder.id} status updated to ${editingOrder.status}.`);
   };
 
   const openSettingsDialog = () => {
@@ -499,10 +479,7 @@ const Admin = () => {
     
     // Close dialog and show success message
     setIsSettingsDialogOpen(false);
-    toast({
-      title: "Settings Updated",
-      description: "Website settings have been updated successfully.",
-    });
+    toast.success("Website settings have been updated successfully.");
   };
 
   const formatCurrency = (amount: number) => {
@@ -1094,4 +1071,3 @@ const Admin = () => {
 };
 
 export default Admin;
-
