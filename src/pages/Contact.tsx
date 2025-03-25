@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,7 +28,7 @@ const Contact = () => {
     // Simulate form submission
     setTimeout(() => {
       setIsSubmitting(false);
-      toast({
+      toast.custom({
         title: "Message Sent",
         description: "Thank you for your message. We'll get back to you shortly!",
       });
