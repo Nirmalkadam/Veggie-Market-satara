@@ -119,10 +119,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (signInError) {
           console.log("Admin sign-in failed, checking if admin account exists:", signInError.message);
           
-          // Check if admin account exists in auth system
-          const { data: userList, error: userListError } = await supabase.auth.admin.listUsers();
+          // Check if admin account exists by trying to query existing profiles
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, name')
+            .eq('name', 'Admin')
+            .maybeSingle();
           
-          const adminUserExists = userList?.users.some(u => u.email === ADMIN_EMAIL);
+          const adminUserExists = !!profileData;
           
           if (!adminUserExists) {
             console.log("Admin account not found, creating it");
