@@ -49,7 +49,7 @@ const ProductCard = ({ product, featured = false }: ProductCardProps) => {
           isImageLoaded ? 'loaded' : ''
         )}>
           <img 
-            src={product.image} 
+            src={product.image || ''} 
             alt={product.name}
             className={cn(
               'hover-card-img w-full h-full object-cover',

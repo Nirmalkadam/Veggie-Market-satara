@@ -17,6 +17,8 @@ export interface Product {
   unit: string | null;
   created_at: string | null;
   updated_at: string | null;
+  discount?: number | null;
+  featured?: boolean;
 }
 
 export interface CartItem {

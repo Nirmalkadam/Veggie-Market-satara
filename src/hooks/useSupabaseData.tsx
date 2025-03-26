@@ -1,11 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Database } from '@/integrations/supabase/types';
-
-type Tables = Database['public']['Tables'];
-type TableName = keyof Tables;
+import { isValidTable, TableName, TableRow, handleDatabaseError, safeCast } from './useDatabase';
 
 type SupabaseDataOptions = {
   realtime?: boolean;
@@ -22,23 +18,30 @@ export function useSupabaseData<T>(
 
   // Fetch data function
   const fetchData = async () => {
+    if (!isValidTable(tableName)) {
+      setError(`Invalid table name: ${tableName}`);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       
       const { data: fetchedData, error: fetchError } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .select('*');
       
       if (fetchError) {
         throw fetchError;
       }
       
-      setData(fetchedData as T[] || []);
+      setData((fetchedData || []) as T[]);
       setError(null);
     } catch (err: any) {
       console.error(`Error fetching ${tableName}:`, err);
-      setError(err.message || `Failed to fetch ${tableName}`);
-      toast.error(`Failed to load ${tableName}: ${err.message}`);
+      const errorMessage = handleDatabaseError(err);
+      setError(`Failed to fetch ${tableName}: ${errorMessage}`);
+      toast.error(`Failed to load ${tableName}: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -46,9 +49,13 @@ export function useSupabaseData<T>(
 
   // Add new item function
   const addItem = async (newItem: Partial<T>) => {
+    if (!isValidTable(tableName)) {
+      return { data: null, error: new Error(`Invalid table name: ${tableName}`) };
+    }
+
     try {
       const { data: insertedData, error: insertError } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .insert(newItem as any)
         .select('*')
         .single();
@@ -64,16 +71,21 @@ export function useSupabaseData<T>(
       return { data: insertedData, error: null };
     } catch (err: any) {
       console.error(`Error adding to ${tableName}:`, err);
-      toast.error(`Failed to add to ${tableName}: ${err.message}`);
+      const errorMessage = handleDatabaseError(err);
+      toast.error(`Failed to add to ${tableName}: ${errorMessage}`);
       return { data: null, error: err };
     }
   };
 
   // Update item function
   const updateItem = async (id: string | number, updates: Partial<T>) => {
+    if (!isValidTable(tableName)) {
+      return { data: null, error: new Error(`Invalid table name: ${tableName}`) };
+    }
+
     try {
       const { data: updatedData, error: updateError } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .update(updates as any)
         .eq('id', id as string)
         .select('*')
@@ -90,16 +102,21 @@ export function useSupabaseData<T>(
       return { data: updatedData, error: null };
     } catch (err: any) {
       console.error(`Error updating ${tableName}:`, err);
-      toast.error(`Failed to update ${tableName}: ${err.message}`);
+      const errorMessage = handleDatabaseError(err);
+      toast.error(`Failed to update ${tableName}: ${errorMessage}`);
       return { data: null, error: err };
     }
   };
 
   // Delete item function
   const deleteItem = async (id: string | number) => {
+    if (!isValidTable(tableName)) {
+      return { error: new Error(`Invalid table name: ${tableName}`) };
+    }
+
     try {
       const { error: deleteError } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .delete()
         .eq('id', id as string);
       
@@ -114,7 +131,8 @@ export function useSupabaseData<T>(
       return { error: null };
     } catch (err: any) {
       console.error(`Error deleting from ${tableName}:`, err);
-      toast.error(`Failed to delete from ${tableName}: ${err.message}`);
+      const errorMessage = handleDatabaseError(err);
+      toast.error(`Failed to delete from ${tableName}: ${errorMessage}`);
       return { error: err };
     }
   };
@@ -124,10 +142,10 @@ export function useSupabaseData<T>(
     fetchData();
     
     // Set up realtime subscription if enabled
-    if (options.realtime) {
+    if (options.realtime && isValidTable(tableName)) {
       const channel = supabase
         .channel(`public:${tableName}`)
-        .on('postgres_changes' as any, {
+        .on('postgres_changes', {
           event: options.realtimeEvents || ['INSERT', 'UPDATE', 'DELETE'],
           schema: 'public',
           table: tableName
@@ -180,11 +198,17 @@ export function useSupabaseItem<T>(
   const fetchItem = async () => {
     if (!id) return;
     
+    if (!isValidTable(tableName)) {
+      setError(`Invalid table name: ${tableName}`);
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       
       const { data: fetchedData, error: fetchError } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .select('*')
         .eq('id', id)
         .single();
@@ -197,8 +221,9 @@ export function useSupabaseItem<T>(
       setError(null);
     } catch (err: any) {
       console.error(`Error fetching ${tableName} item:`, err);
-      setError(err.message || `Failed to fetch ${tableName} item`);
-      toast.error(`Failed to load item: ${err.message}`);
+      const errorMessage = handleDatabaseError(err);
+      setError(`Failed to fetch ${tableName} item: ${errorMessage}`);
+      toast.error(`Failed to load item: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -208,9 +233,13 @@ export function useSupabaseItem<T>(
   const updateItem = async (updates: Partial<T>) => {
     if (!id) return { data: null, error: new Error('No ID provided') };
     
+    if (!isValidTable(tableName)) {
+      return { data: null, error: new Error(`Invalid table name: ${tableName}`) };
+    }
+    
     try {
       const { data: updatedData, error: updateError } = await supabase
-        .from(tableName as any)
+        .from(tableName)
         .update(updates as any)
         .eq('id', id)
         .select('*')
@@ -227,7 +256,8 @@ export function useSupabaseItem<T>(
       return { data: updatedData, error: null };
     } catch (err: any) {
       console.error(`Error updating ${tableName} item:`, err);
-      toast.error(`Failed to update item: ${err.message}`);
+      const errorMessage = handleDatabaseError(err);
+      toast.error(`Failed to update item: ${errorMessage}`);
       return { data: null, error: err };
     }
   };
@@ -238,10 +268,10 @@ export function useSupabaseItem<T>(
       fetchItem();
       
       // Set up realtime subscription for this item if enabled
-      if (options.realtime) {
+      if (options.realtime && isValidTable(tableName)) {
         const channel = supabase
           .channel(`public:${tableName}:id=eq.${id}`)
-          .on('postgres_changes' as any, {
+          .on('postgres_changes', {
             event: ['UPDATE', 'DELETE'],
             schema: 'public',
             table: tableName,
@@ -289,7 +319,7 @@ export function useUserOrders(userId: string | null) {
       
       // Fetch orders
       const { data: ordersData, error: ordersError } = await supabase
-        .from('orders' as any)
+        .from('orders')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -304,27 +334,35 @@ export function useUserOrders(userId: string | null) {
       // For each order, fetch order items with product details
       const ordersWithItems = await Promise.all(
         ordersData.map(async (order) => {
-          const { data: orderItems, error: itemsError } = await supabase
-            .from('order_items' as any)
-            .select(`
-              id,
-              quantity,
-              price,
-              products (
+          try {
+            const { data: orderItems, error: itemsError } = await supabase
+              .from('order_items')
+              .select(`
                 id,
-                name,
-                image,
-                unit
-              )
-            `)
-            .eq('order_id', order.id);
-          
-          if (itemsError) throw itemsError;
-          
-          return {
-            ...order,
-            items: orderItems || []
-          };
+                quantity,
+                price,
+                products (
+                  id,
+                  name,
+                  image,
+                  unit
+                )
+              `)
+              .eq('order_id', order.id);
+            
+            if (itemsError) throw itemsError;
+            
+            return {
+              ...order,
+              items: orderItems || []
+            };
+          } catch (err) {
+            console.error(`Error fetching items for order ${order.id}:`, err);
+            return {
+              ...order,
+              items: []
+            };
+          }
         })
       );
       
@@ -332,8 +370,9 @@ export function useUserOrders(userId: string | null) {
       setError(null);
     } catch (err: any) {
       console.error('Error fetching user orders:', err);
-      setError(err.message || 'Failed to fetch orders');
-      toast.error(`Failed to load orders: ${err.message}`);
+      const errorMessage = handleDatabaseError(err);
+      setError(`Failed to fetch orders: ${errorMessage}`);
+      toast.error(`Failed to load orders: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -347,7 +386,7 @@ export function useUserOrders(userId: string | null) {
       // Set up realtime subscription for orders
       const channel = supabase
         .channel(`public:orders:user_id=eq.${userId}`)
-        .on('postgres_changes' as any, {
+        .on('postgres_changes', {
           event: ['INSERT', 'UPDATE', 'DELETE'],
           schema: 'public',
           table: 'orders',
@@ -412,7 +451,7 @@ export function useAdminData() {
       
       // First fetch all orders
       const { data: ordersData, error: ordersError } = await supabase
-        .from('orders' as any)
+        .from('orders')
         .select('*')
         .order('created_at', { ascending: false });
       
@@ -424,7 +463,7 @@ export function useAdminData() {
           try {
             // Get user profile
             const { data: userData, error: userError } = await supabase
-              .from('profiles' as any)
+              .from('profiles')
               .select('name, email:id')
               .eq('id', order.user_id)
               .single();
@@ -433,7 +472,7 @@ export function useAdminData() {
             
             // Get order items with product info
             const { data: orderItems, error: itemsError } = await supabase
-              .from('order_items' as any)
+              .from('order_items')
               .select(`
                 id,
                 quantity,
@@ -487,7 +526,7 @@ export function useAdminData() {
       
       // Fetch profiles
       const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles' as any)
+        .from('profiles')
         .select('*');
       
       if (profilesError) throw profilesError;
@@ -497,7 +536,7 @@ export function useAdminData() {
         (profilesData || []).map(async (profile) => {
           try {
             const { count, error: countError } = await supabase
-              .from('orders' as any)
+              .from('orders')
               .select('*', { count: 'exact', head: true })
               .eq('user_id', profile.id);
             
@@ -555,7 +594,7 @@ export function useAdminData() {
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
       const { data, error } = await supabase
-        .from('orders' as any)
+        .from('orders')
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', orderId)
         .select('*')
@@ -585,7 +624,7 @@ export function useAdminData() {
     // Set up realtime subscription for orders
     const ordersChannel = supabase
       .channel('admin-orders-changes')
-      .on('postgres_changes' as any, {
+      .on('postgres_changes', {
         event: ['INSERT', 'UPDATE', 'DELETE'],
         schema: 'public',
         table: 'orders'
@@ -598,7 +637,7 @@ export function useAdminData() {
     // Set up realtime subscription for profiles
     const profilesChannel = supabase
       .channel('admin-profiles-changes')
-      .on('postgres_changes' as any, {
+      .on('postgres_changes', {
         event: ['INSERT', 'UPDATE', 'DELETE'],
         schema: 'public',
         table: 'profiles'

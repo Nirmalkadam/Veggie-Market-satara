@@ -64,7 +64,6 @@ import { useAdminData } from '@/hooks/useSupabaseData';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 
-// Define types for products
 interface Product {
   id: string;
   name: string;
@@ -79,7 +78,6 @@ interface Product {
   updated_at: string | null;
 }
 
-// Define interfaces for pages that use products
 interface AdminPageProps {}
 
 const Admin: React.FC<AdminPageProps> = () => {
@@ -141,7 +139,6 @@ const Admin: React.FC<AdminPageProps> = () => {
     revenue
   } = useAdminData();
 
-  // Now we need to cast products to the correct type
   const products = productsData as Product[];
 
   const handleAddProduct = () => {
@@ -180,12 +177,10 @@ const Admin: React.FC<AdminPageProps> = () => {
 
   const onSubmitProduct = async (data: ProductFormValues) => {
     if (selectedProductId) {
-      // Update existing product
       await updateProduct(selectedProductId, data);
       toast.success('Product updated successfully!');
       setIsProductEditOpen(false);
     } else {
-      // Add new product
       await addProduct(data);
       toast.success('Product added successfully!');
       setIsProductDialogOpen(false);
@@ -559,7 +554,6 @@ const Admin: React.FC<AdminPageProps> = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Product Dialog */}
       <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -665,24 +659,21 @@ const Admin: React.FC<AdminPageProps> = () => {
                   )}
                 />
               </div>
-              <FormField
-                control={productForm.control}
-                name="organic"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel>Organic</FormLabel>
-                      <FormDescription>
-                        Is this product organic?
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Input type="checkbox" checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel>Organic</FormLabel>
+                  <p className="text-sm text-muted-foreground">
+                    Is this product organic?
+                  </p>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
               <DialogFooter>
                 <Button type="submit">Add Product</Button>
               </DialogFooter>
@@ -691,7 +682,6 @@ const Admin: React.FC<AdminPageProps> = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Product Edit Dialog */}
       <Dialog open={isProductEditOpen} onOpenChange={setIsProductEditOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -797,24 +787,21 @@ const Admin: React.FC<AdminPageProps> = () => {
                   )}
                 />
               </div>
-              <FormField
-                control={productForm.control}
-                name="organic"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel>Organic</FormLabel>
-                      <FormDescription>
-                        Is this product organic?
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Input type="checkbox" checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel>Organic</FormLabel>
+                  <p className="text-sm text-muted-foreground">
+                    Is this product organic?
+                  </p>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
               <DialogFooter>
                 <Button type="submit">Update Product</Button>
               </DialogFooter>
@@ -823,7 +810,6 @@ const Admin: React.FC<AdminPageProps> = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteConfirmationOpen} onOpenChange={setIsDeleteConfirmationOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
