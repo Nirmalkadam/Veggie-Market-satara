@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -653,11 +652,11 @@ const Admin: React.FC<AdminPageProps> = () => {
                 control={productForm.control}
                 name="organic"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel>Organic</FormLabel>
-                      <FormDescription className="text-sm text-muted-foreground">
-                        Is this product organic?
+                      <FormLabel className="text-base">Organic</FormLabel>
+                      <FormDescription>
+                        This product is certified organic.
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -787,11 +786,11 @@ const Admin: React.FC<AdminPageProps> = () => {
                 control={productForm.control}
                 name="organic"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel>Organic</FormLabel>
-                      <FormDescription className="text-sm text-muted-foreground">
-                        Is this product organic?
+                      <FormLabel className="text-base">Organic</FormLabel>
+                      <FormDescription>
+                        This product is certified organic.
                       </FormDescription>
                     </div>
                     <FormControl>

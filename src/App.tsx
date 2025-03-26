@@ -24,7 +24,15 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Create QueryClient instance outside of component to avoid recreation on render
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 // Protected route component for admin-only routes
 const AdminRoute = ({ children }: { children: JSX.Element }) => {
@@ -75,26 +83,28 @@ const AppRoutes = () => (
   </Routes>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <CartProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <div className="flex flex-col min-h-screen">
-              <Navbar />
-              <main className="flex-1 pt-16">
-                <AppRoutes />
-              </main>
-              <Footer />
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
-      </CartProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <div className="flex flex-col min-h-screen">
+                <Navbar />
+                <main className="flex-1 pt-16">
+                  <AppRoutes />
+                </main>
+                <Footer />
+              </div>
+            </TooltipProvider>
+          </CartProvider>
+        </QueryClientProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
 
 export default App;
