@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -84,7 +83,6 @@ const Profile = () => {
   const [profileData, setProfileData] = useState<any>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   
-  // Get user orders using the custom hook
   const { 
     orders: userOrders, 
     loading: ordersLoading, 
@@ -105,7 +103,6 @@ const Profile = () => {
     },
   });
 
-  // Fetch user profile data from Supabase
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!isAuthenticated || !user?.id) return;
@@ -123,7 +120,6 @@ const Profile = () => {
         
         setProfileData(data);
         
-        // Set form values
         form.reset({
           name: data.name || '',
           email: user.email || '',
@@ -223,7 +219,7 @@ const Profile = () => {
   };
 
   if (isAuthenticated === false) {
-    return null; // Don't render anything if not authenticated
+    return null;
   }
 
   return (
@@ -394,7 +390,7 @@ const Profile = () => {
                                 readOnly={!isEditing}
                                 className={!isEditing ? "bg-muted" : ""}
                               />
-                            </Control>
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -535,7 +531,6 @@ const Profile = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Order Details Dialog */}
       <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
