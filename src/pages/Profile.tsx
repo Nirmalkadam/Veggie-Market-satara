@@ -1,18 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { 
-  User, 
-  Package, 
-  Edit, 
-  Save,
-  X,
-  Eye,
-  ChevronRight,
-  CalendarClock
-} from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useUserOrders } from '@/hooks/useSupabaseData';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/utils';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import {
   Form,
   FormControl,
@@ -23,31 +30,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { Badge } from '@/components/ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -55,11 +46,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { useAuth } from '@/context/AuthContext';
-import { useUserOrders } from '@/hooks/useSupabaseData';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+} from '@/components/ui/dialog';
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'Name is required' }),
@@ -194,13 +181,6 @@ const Profile = () => {
       day: 'numeric',
     };
     return new Date(dateString).toLocaleDateString('en-IN', options);
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
   };
 
   const getStatusColor = (status: string) => {
@@ -504,7 +484,7 @@ const Profile = () => {
                       <TableRow key={order.id}>
                         <TableCell className="font-medium">#{order.id.substring(0, 8)}</TableCell>
                         <TableCell>{formatDate(order.created_at)}</TableCell>
-                        <TableCell>{order.items?.length || 0} item(s)</TableCell>
+                        <TableCell>{order.items?.length || 0} item(s)}</TableCell>
                         <TableCell>{formatCurrency(parseFloat(order.total))}</TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(order.status)}>

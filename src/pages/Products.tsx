@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
@@ -199,7 +200,7 @@ const Products = () => {
           <Checkbox
             id="organic"
             checked={organicOnly}
-            onCheckedChange={checked => setOrganicOnly(checked)}
+            onCheckedChange={(checked) => setOrganicOnly(checked === true)}
           />
           <label
             htmlFor="organic"

@@ -1,269 +1,236 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
+import ProductCard from '@/components/ProductCard';
+import { 
+  ArrowRight, 
+  Leaf, 
+  Truck, 
+  Clock, 
+  ThumbsUp 
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { createMockProduct } from '@/types';
 
-const Index = () => {
-  // Mock products for development
-  const featuredProduct = createMockProduct({
-    id: "featured1",
-    name: "Organic Fresh Avocado",
-    description: "Creamy, delicious, and perfect for any meal. Our avocados are sourced from local farms.",
-    price: 2.99,
-    image: "https://images.unsplash.com/photo-1519162808019-7de1683fa2ad?q=80&w=1976&auto=format&fit=crop",
-    category: "fruits",
-    stock: 50,
-    unit: "each",
-    organic: true,
-    featured: true
-  });
+// Mock categories for the homepage
+const categories = [
+  { id: 1, name: 'Vegetables', image: 'https://images.unsplash.com/photo-1557844352-761f2dfe67c7?q=80&w=400&auto=format&fit=crop' },
+  { id: 2, name: 'Fruits', image: 'https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?q=80&w=400&auto=format&fit=crop' },
+  { id: 3, name: 'Dairy', image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?q=80&w=400&auto=format&fit=crop' },
+  { id: 4, name: 'Grains', image: 'https://images.unsplash.com/photo-1565478574907-9b99683017d7?q=80&w=400&auto=format&fit=crop' }
+];
 
-  const products = [
+const Index = () => {
+  // Sample products for the homepage
+  const featuredProducts = [
     createMockProduct({
-      id: "prod1",
-      name: "Organic Spinach",
-      description: "Fresh organic spinach, perfect for salads and cooking.",
-      price: 3.99,
-      image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?q=80&w=1000&auto=format&fit=crop",
-      category: "greens",
+      id: "fp1",
+      name: "Organic Mixed Vegetables Box",
+      description: "A selection of fresh, seasonal organic vegetables.",
+      price: 24.99,
+      image: "https://images.unsplash.com/photo-1610348725531-843dff563e2c?q=80&w=1000&auto=format&fit=crop",
+      category: "vegetables",
+      stock: 15,
+      unit: "box",
+      organic: true,
+      featured: true
+    }),
+    createMockProduct({
+      id: "fp2",
+      name: "Farm-Fresh Eggs",
+      description: "Free-range eggs from pasture-raised hens.",
+      price: 5.99,
+      image: "https://images.unsplash.com/photo-1583913836387-35de36b93055?q=80&w=1000&auto=format&fit=crop",
+      category: "dairy",
       stock: 30,
-      unit: "bunch",
+      unit: "dozen",
       organic: true
     }),
     createMockProduct({
-      id: "prod2",
-      name: "Red Bell Pepper",
-      description: "Sweet and crunchy red bell peppers.",
-      price: 1.49,
-      image: "https://images.unsplash.com/photo-1526470498-9ae73c665de8?q=80&w=1998&auto=format&fit=crop",
-      category: "vegetables",
-      stock: 40,
-      unit: "each",
-      discount: 10
-    }),
-    createMockProduct({
-      id: "prod3",
-      name: "Organic Carrots",
-      description: "Sweet and nutritious organic carrots.",
-      price: 2.49,
-      image: "https://images.unsplash.com/photo-1445282768818-728615cc910a?q=80&w=1770&auto=format&fit=crop",
-      category: "roots",
+      id: "fp3",
+      name: "Organic Whole Milk",
+      description: "Creamy, non-homogenized whole milk from grass-fed cows.",
+      price: 4.49,
+      image: "https://images.unsplash.com/photo-1563448443-376abacc5733?q=80&w=1000&auto=format&fit=crop",
+      category: "dairy",
       stock: 25,
-      unit: "bundle",
+      unit: "half-gallon",
+      discount: 0.5
+    }),
+    createMockProduct({
+      id: "fp4",
+      name: "Organic Honey",
+      description: "Raw, unfiltered honey from local bees.",
+      price: 12.99,
+      image: "https://images.unsplash.com/photo-1626379801357-537732eb0aec?q=80&w=1000&auto=format&fit=crop",
+      category: "pantry",
+      stock: 20,
+      unit: "jar",
       organic: true
     }),
     createMockProduct({
-      id: "prod4",
-      name: "Fresh Broccoli",
-      description: "Crisp and flavorful broccoli crowns.",
-      price: 2.29,
-      image: "https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?q=80&w=2002&auto=format&fit=crop",
-      category: "vegetables",
-      stock: 35,
-      unit: "head",
+      id: "fp5",
+      name: "Organic Sourdough Bread",
+      description: "Artisanal sourdough bread made with organic flour.",
+      price: 7.99,
+      image: "https://images.unsplash.com/photo-1584441832771-8656a510251a?q=80&w=1000&auto=format&fit=crop",
+      category: "bakery",
+      stock: 15,
+      unit: "loaf",
       organic: true
     })
   ];
 
   return (
-    <div className="animate-fade-in">
+    <div className="container mx-auto px-4 py-8 animate-fade-in">
       {/* Hero Section */}
-      <section className="relative bg-accent py-24 overflow-hidden">
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="animate-slide-up">
-              <Badge className="mb-4 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary">
-                100% Organic Produce
+      <section className="py-12 md:py-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Badge className="px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900">
+                Organic &amp; Sustainable
               </Badge>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-tight mb-6">
-                Fresh Vegetables <br />
-                <span className="text-primary">Delivered to Your Door</span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+                Fresh Produce Delivered <span className="text-primary">Direct to You</span>
               </h1>
-              <p className="text-lg text-muted-foreground mb-8 max-w-lg">
-                Discover a wide range of farm-fresh vegetables, sustainably grown and carefully selected for your healthy lifestyle.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Button asChild size="lg" className="rounded-full">
-                  <Link to="/products">
-                    Shop Now
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="lg" className="rounded-full">
-                  <Link to="/about">Learn More</Link>
-                </Button>
-              </div>
             </div>
-            <div className="relative animate-slide-down">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-3xl"></div>
-              <img
-                src="https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
-                alt="Fresh vegetables"
-                className="rounded-3xl shadow-lg aspect-[4/3] w-full h-full object-cover"
-              />
-              <div className="absolute bottom-6 left-6 right-6 glass-panel rounded-2xl p-4">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-start gap-4">
-                    <span className="inline-flex items-center justify-center rounded-full bg-primary/10 p-2 text-primary">
-                      <Leaf className="h-6 w-6" />
-                    </span>
-                    <div>
-                      <p className="font-medium">Farm Fresh Guarantee</p>
-                      <p className="text-sm text-muted-foreground">Quality you can trust</p>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-primary" />
-                </div>
-              </div>
+            <p className="text-lg text-muted-foreground">
+              Farm-fresh fruits and vegetables harvested at peak ripeness, delivered straight to your door. Taste the difference of local, sustainable farming.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button size="lg" asChild>
+                <Link to="/products">Shop Now <ArrowRight className="ml-2 h-5 w-5" /></Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link to="/about">Learn More</Link>
+              </Button>
             </div>
+          </div>
+          <div className="rounded-xl overflow-hidden shadow-xl">
+            <img 
+              src="https://images.unsplash.com/photo-1550989460-0adf9ea622e2?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3"
+              alt="Fresh produce"
+              className="w-full h-96 object-cover hover:scale-105 transition-transform duration-500"
+            />
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center mb-12">
-            <Badge className="mb-4 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary">
-              Why Choose Us
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4">
-              Farm Fresh Vegetables, <span className="text-primary">Delivered Fast</span>
-            </h2>
-            <p className="text-muted-foreground">
-              We're committed to providing the freshest produce with exceptional service.
-            </p>
+      <section className="py-16 bg-gray-50 rounded-2xl my-16 px-6">
+        <div className="text-center mb-12">
+          <Badge className="mb-4 px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900">
+            What Sets Us Apart
+          </Badge>
+          <h2 className="text-3xl md:text-4xl font-bold">Why Choose Farm Fresh?</h2>
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+            We're committed to bringing you the highest quality produce while supporting sustainable farming practices.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+              <Leaf className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Organic</h3>
+            <p className="text-muted-foreground">All our produce is certified organic, grown without synthetic pesticides or fertilizers.</p>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: <Leaf className="h-6 w-6" />,
-                title: "100% Organic",
-                description: "All our products are certified organic, free from harmful chemicals."
-              },
-              {
-                icon: <Truck className="h-6 w-6" />,
-                title: "Free Delivery",
-                description: "Free delivery on all orders over $50 within the city."
-              },
-              {
-                icon: <Clock className="h-6 w-6" />,
-                title: "Always Fresh",
-                description: "From farm to your doorstep within 24 hours."
-              },
-              {
-                icon: <ThumbsUp className="h-6 w-6" />,
-                title: "Quality Support",
-                description: "Our dedicated team is here to help you 7 days a week."
-              }
-            ].map((feature, index) => (
-              <div 
-                key={index} 
-                className="bg-card border border-border rounded-xl p-6 hover:shadow-md transition-shadow"
-              >
-                <div className="inline-flex items-center justify-center rounded-full bg-primary/10 p-3 text-primary mb-4">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-medium mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </div>
-            ))}
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+              <Truck className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Fast Delivery</h3>
+            <p className="text-muted-foreground">From our farm to your table in 24 hours, ensuring maximum freshness.</p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+              <Clock className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Seasonal Products</h3>
+            <p className="text-muted-foreground">We harvest our produce at peak ripeness for maximum flavor and nutrition.</p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className="h-12 w-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+              <ThumbsUp className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Sustainable</h3>
+            <p className="text-muted-foreground">Our farming practices are environmentally friendly and support biodiversity.</p>
           </div>
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="py-20 bg-accent/50">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-wrap justify-between items-center mb-12">
-            <div>
-              <Badge className="mb-4 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary">
-                Browse Categories
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-                Shop by <span className="text-primary">Category</span>
-              </h2>
-            </div>
-            <Button asChild variant="outline" className="mt-4 md:mt-0">
-              <Link to="/products">View All Categories</Link>
-            </Button>
+      {/* Categories Section */}
+      <section className="py-16">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+          <div>
+            <Badge className="mb-2 px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900">
+              Browse By Category
+            </Badge>
+            <h2 className="text-3xl font-bold">Shop Categories</h2>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categories.map((category, index) => (
-              <Link 
-                key={index} 
-                to={`/products?category=${category.name.toLowerCase()}`}
-                className="group relative overflow-hidden rounded-xl aspect-[4/3]"
-              >
-                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors z-10"></div>
+          <Button variant="link" size="sm" asChild className="mt-2 md:mt-0">
+            <Link to="/products">View All Categories</Link>
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {categories.map((category) => (
+            <Link 
+              key={category.id} 
+              to={`/products?category=${category.name.toLowerCase()}`}
+              className="group relative rounded-xl overflow-hidden"
+            >
+              <div className="aspect-square w-full bg-gray-100">
                 <img 
                   src={category.image} 
                   alt={category.name} 
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
-                  <h3 className="text-xl font-medium text-white mb-1">{category.name}</h3>
-                  <p className="text-white/70 text-sm">{category.count} products</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent flex items-end p-4">
+                <h3 className="text-white font-semibold text-lg">{category.name}</h3>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-wrap justify-between items-center mb-12">
-            <div>
-              <Badge className="mb-4 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary">
-                Featured Products
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-                Our Best <span className="text-primary">Selling Products</span>
-              </h2>
-            </div>
-            <Button asChild variant="outline" className="mt-4 md:mt-0">
-              <Link to="/products">View All Products</Link>
-            </Button>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <ProductCard product={featuredProduct} featured />
-            {products.slice(1, 5).map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Call to Action */}
-      <section className="py-24 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <Badge className="mb-4 bg-white/20 text-white hover:bg-white/30 hover:text-white">
-              Limited Time Offer
+      {/* Featured Products Section */}
+      <section className="py-16">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+          <div>
+            <Badge className="mb-2 px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-900">
+              Seasonal Favorites
             </Badge>
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4">
-              Get 15% Off Your First Order
-            </h2>
-            <p className="text-white/80 mb-8 text-lg">
-              Sign up for our newsletter and receive a 15% discount code for your first purchase. Fresh vegetables are just a click away!
-            </p>
-            <div className="bg-white rounded-full p-2 flex max-w-md mx-auto">
-              <input 
-                type="email" 
-                placeholder="Enter your email" 
-                className="bg-transparent flex-1 px-4 py-2 focus:outline-none text-black" 
-              />
-              <Button className="rounded-full">
-                Subscribe Now
-              </Button>
-            </div>
+            <h2 className="text-3xl font-bold">Featured Products</h2>
           </div>
+          <Button variant="link" size="sm" asChild className="mt-2 md:mt-0">
+            <Link to="/products">View All Products</Link>
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {featuredProducts.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-primary text-primary-foreground rounded-2xl my-16 p-8 md:p-12">
+        <div className="text-center space-y-4 max-w-3xl mx-auto">
+          <Badge className="mb-2 px-3 py-1 text-sm rounded-full bg-white/20 text-white hover:bg-white/30">
+            Special Offer
+          </Badge>
+          <h2 className="text-3xl md:text-4xl font-bold">Get 15% Off Your First Order</h2>
+          <p className="text-lg opacity-90">
+            Join our community of conscious consumers and get exclusive access to seasonal discounts and recipes.
+          </p>
+          <Button size="lg" variant="secondary" className="mt-4" asChild>
+            <Link to="/products">Shop Now</Link>
+          </Button>
         </div>
       </section>
     </div>

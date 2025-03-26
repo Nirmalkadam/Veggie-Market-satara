@@ -34,7 +34,7 @@ export const useProducts = () => {
     }
   }, []);
 
-  const addProduct = useCallback(async (product: Partial<Product>) => {
+  const addProduct = useCallback(async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -302,4 +302,72 @@ export const useUserProfiles = () => {
     error,
     fetchProfiles,
   };
+};
+
+// This is the missing hook that was causing the error
+export const useAdminData = () => {
+  const { products, loading: productsLoading, error: productsError, fetchProducts, addProduct, updateProduct, deleteProduct } = useProducts();
+  const { orders, loading: ordersLoading, error: ordersError, fetchOrders, updateOrderStatus } = useOrders();
+  const { profiles: userProfiles, loading: usersLoading, error: usersError, fetchProfiles } = useUserProfiles();
+
+  // Transform user profiles to include order count
+  const users = userProfiles.map(profile => ({
+    ...profile,
+    orderCount: orders.filter(order => order.user_id === profile.id).length
+  }));
+
+  // Calculate revenue statistics
+  const calculateRevenue = () => {
+    const total = orders.reduce((sum, order) => sum + parseFloat(order.total.toString()), 0);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayRevenue = orders
+      .filter(order => new Date(order.created_at) >= today)
+      .reduce((sum, order) => sum + parseFloat(order.total.toString()), 0);
+    
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthlyRevenue = orders
+      .filter(order => new Date(order.created_at) >= firstDayOfMonth)
+      .reduce((sum, order) => sum + parseFloat(order.total.toString()), 0);
+    
+    return {
+      total,
+      today: todayRevenue,
+      monthly: monthlyRevenue
+    };
+  };
+
+  return {
+    // Products data
+    products,
+    productsLoading,
+    productsError,
+    fetchProducts,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    
+    // Orders data
+    orders,
+    ordersLoading,
+    ordersError,
+    fetchOrders,
+    updateOrderStatus,
+    
+    // Users data
+    users,
+    usersLoading,
+    usersError,
+    fetchUsers: fetchProfiles,
+    
+    // Revenue statistics
+    revenue: calculateRevenue()
+  };
+};
+
+// Add this for the Profile page
+export const useUserOrders = () => {
+  const { orders, loading, error } = useOrders();
+  return { orders, loading, error };
 };
