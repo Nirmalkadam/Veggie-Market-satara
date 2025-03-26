@@ -75,11 +75,12 @@ const Profile = () => {
   const [profileData, setProfileData] = useState<any>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   
+  // Fix for error 4: Remove the unnecessary argument here
   const { 
     orders: userOrders, 
     loading: ordersLoading, 
     error: ordersError 
-  } = useUserOrders(user?.id || null);
+  } = useUserOrders();
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -490,7 +491,8 @@ const Profile = () => {
                         <TableCell className="font-medium">#{order.id.substring(0, 8)}</TableCell>
                         <TableCell>{formatDate(order.created_at)}</TableCell>
                         <TableCell>{order.items?.length || 0} item(s)</TableCell>
-                        <TableCell>{formatCurrency(parseFloat(order.total))}</TableCell>
+                        {/* Fix for error 5: Ensure total is a string before passing to parseFloat */}
+                        <TableCell>{formatCurrency(parseFloat(String(order.total)))}</TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(order.status)}>
                             {order.status}
