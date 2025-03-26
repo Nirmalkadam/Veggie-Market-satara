@@ -9,21 +9,171 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      profiles: {
+      order_items: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
-          name: string | null
+          order_id: string
+          price: number
+          product_id: string
+          quantity: number
         }
         Insert: {
-          created_at?: string
-          id: string
-          name?: string | null
+          created_at?: string | null
+          id?: string
+          order_id: string
+          price: number
+          product_id: string
+          quantity: number
         }
         Update: {
+          created_at?: string | null
+          id?: string
+          order_id?: string
+          price?: number
+          product_id?: string
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          city: string
+          country: string
+          created_at: string | null
+          id: string
+          payment_method: string | null
+          state: string
+          status: string
+          street: string
+          total: number
+          updated_at: string | null
+          user_id: string
+          zip_code: string
+        }
+        Insert: {
+          city: string
+          country: string
+          created_at?: string | null
+          id?: string
+          payment_method?: string | null
+          state: string
+          status?: string
+          street: string
+          total: number
+          updated_at?: string | null
+          user_id: string
+          zip_code: string
+        }
+        Update: {
+          city?: string
+          country?: string
+          created_at?: string | null
+          id?: string
+          payment_method?: string | null
+          state?: string
+          status?: string
+          street?: string
+          total?: number
+          updated_at?: string | null
+          user_id?: string
+          zip_code?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image: string | null
+          name: string
+          organic: boolean | null
+          price: number
+          stock: number
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image?: string | null
+          name: string
+          organic?: boolean | null
+          price: number
+          stock?: number
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image?: string | null
+          name?: string
+          organic?: boolean | null
+          price?: number
+          stock?: number
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          is_admin: boolean | null
+          name: string | null
+          phone: string | null
+          state: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id: string
+          is_admin?: boolean | null
+          name?: string | null
+          phone?: string | null
+          state?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           id?: string
+          is_admin?: boolean | null
           name?: string | null
+          phone?: string | null
+          state?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }
