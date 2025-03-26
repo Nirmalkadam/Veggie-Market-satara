@@ -146,6 +146,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           
           if (signUpError) {
             console.error("Error creating admin account:", signUpError);
+            setLoading(false);
             throw signUpError;
           }
           
@@ -156,6 +157,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           });
           
           if (loginError) {
+            setLoading(false);
             throw loginError;
           }
           
@@ -165,6 +167,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
           // Admin exists but password might be wrong
           toast.error("Admin account exists but password is incorrect");
+          setLoading(false);
           throw new Error("Admin account exists but password is incorrect");
         }
       }
@@ -177,18 +180,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           email,
         });
         
+        setLoading(false);
         throw new Error('Please check your email to confirm your account. We\'ve sent a new confirmation link.');
       }
       
       // For any other errors, just throw the original error
+      setLoading(false);
       throw error;
       
     } catch (error: any) {
       console.error('Login failed:', error);
       toast.error(error.message || 'Login failed');
-      throw error;
-    } finally {
       setLoading(false);
+      throw error;
     }
   };
 
@@ -206,6 +210,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (userData.user) {
           toast.error('Admin account already exists. Please login instead.');
+          setLoading(false);
           throw new Error('Admin account already exists');
         }
         
@@ -219,6 +224,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         
         if (error) {
+          setLoading(false);
           throw error;
         }
         
@@ -229,6 +235,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         
         toast.success('Admin account created and logged in successfully!');
+        setLoading(false);
         return;
       }
       
@@ -242,15 +249,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       
       if (error) {
+        setLoading(false);
         throw error;
       }
       
       toast.success('Registration successful! Please check your email to confirm your account.');
+      setLoading(false);
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
-      throw error;
-    } finally {
       setLoading(false);
+      throw error;
     }
   };
 
