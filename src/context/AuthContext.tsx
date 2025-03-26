@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log(`Attempting to log in with email: ${email}`);
       
-      // First try standard login for all users
+      // Standard login attempt
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -115,7 +115,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
       
-      // If login fails and it's admin, check if we need to create the admin account
+      // If login fails, handle specific cases
+      
+      // Check if it's an admin login attempt
       const isAdminAttempt = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
       
       if (isAdminAttempt && error.message.includes('Invalid login credentials')) {
@@ -133,6 +135,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           throw error; // Use original error
         }
         
+        // Only create admin if it doesn't exist yet
         if (count === 0) {
           console.log("Admin account doesn't exist, creating it");
           
@@ -167,13 +170,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           return;
         } else {
           // Admin exists but password might be wrong
-          toast.error("Admin account exists but password is incorrect");
           setLoading(false);
           throw new Error("Admin account exists but password is incorrect");
         }
       }
       
-      // Handle other error cases
+      // Handle email not confirmed
       if (error.message.includes('Email not confirmed')) {
         // If email not confirmed, send another confirmation email
         await supabase.auth.resend({
@@ -191,9 +193,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
     } catch (error: any) {
       console.error('Login failed:', error);
-      toast.error(error.message || 'Login failed');
       setLoading(false);
-      throw error;
+      throw error; // Throw to be caught by the Login component
     }
   };
 
