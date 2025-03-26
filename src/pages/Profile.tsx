@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -47,6 +48,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { useNavigate } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { User, Package, Edit, Save, X, Eye, CalendarClock } from 'lucide-react';
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'Name is required' }),
@@ -484,7 +489,7 @@ const Profile = () => {
                       <TableRow key={order.id}>
                         <TableCell className="font-medium">#{order.id.substring(0, 8)}</TableCell>
                         <TableCell>{formatDate(order.created_at)}</TableCell>
-                        <TableCell>{order.items?.length || 0} item(s)}</TableCell>
+                        <TableCell>{order.items?.length || 0} item(s)</TableCell>
                         <TableCell>{formatCurrency(parseFloat(order.total))}</TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(order.status)}>
