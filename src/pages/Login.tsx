@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -27,11 +27,18 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
-  const { login, loading } = useAuth();
+  const { login, loading, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -59,6 +66,11 @@ const Login = () => {
       }
     }
   };
+
+  // If already authenticated, don't render the login form
+  if (isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">

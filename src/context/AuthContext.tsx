@@ -101,9 +101,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log(`Attempting to log in with email: ${email}`);
       
-      // Check if this is an admin login attempt
-      const isAdminAttempt = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-      
       // First try standard login for all users
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -118,7 +115,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
       
-      // If login fails and it's admin, we may need to create the admin account
+      // If login fails and it's admin, check if we need to create the admin account
+      const isAdminAttempt = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+      
       if (isAdminAttempt && error.message.includes('Invalid login credentials')) {
         console.log("Admin login failed, checking if admin exists");
         
