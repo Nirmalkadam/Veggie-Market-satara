@@ -1,95 +1,71 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { ArrowRight, Leaf, Truck, Clock, ThumbsUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import ProductCard from "@/components/ProductCard";
-import { Product } from "@/types";
-
-// Mock featured products - updating prices to more realistic INR values
-const featuredProducts: Product[] = [
-  {
-    id: "1",
-    name: "Organic Broccoli",
-    description: "Fresh organic broccoli, locally grown and packed with vitamins and minerals.",
-    price: 149.99,
-    image: "https://images.unsplash.com/photo-1584270354949-c26b0d5b4a0c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-    category: "vegetables",
-    stock: 50,
-    unit: "bunch",
-    organic: true,
-    featured: true,
-  },
-  {
-    id: "2",
-    name: "Fresh Carrots",
-    description: "Sweet and crunchy organic carrots, perfect for salads, juicing, or cooking.",
-    price: 79.99,
-    image: "https://images.unsplash.com/photo-1582515073490-39981397c445?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-    category: "vegetables",
-    stock: 80,
-    unit: "kg",
-    organic: true,
-  },
-  {
-    id: "3",
-    name: "Bell Peppers Mix",
-    description: "Colorful mix of fresh bell peppers - red, yellow, and green. Great for stir-fries or salads.",
-    price: 199.99,
-    image: "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-    category: "vegetables",
-    stock: 35,
-    unit: "pack",
-    discount: 10,
-  },
-  {
-    id: "4",
-    name: "Fresh Spinach",
-    description: "Tender and nutritious organic spinach leaves, responsibly grown and harvested.",
-    price: 129.99,
-    image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-    category: "greens",
-    stock: 40,
-    unit: "bunch",
-    organic: true,
-  },
-  {
-    id: "5",
-    name: "Organic Tomatoes",
-    description: "Juicy, ripe organic tomatoes, perfect for salads, sandwiches, or cooking.",
-    price: 169.99,
-    image: "https://images.unsplash.com/photo-1592841200221-a6c613d6e87c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-    category: "vegetables",
-    stock: 60,
-    unit: "kg",
-    organic: true,
-  }
-];
-
-const categories = [
-  {
-    name: "Vegetables",
-    image: "https://images.unsplash.com/photo-1557844351-5a1668e8f515?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-    count: 28,
-  },
-  {
-    name: "Fruits",
-    image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-    count: 23,
-  },
-  {
-    name: "Herbs",
-    image: "https://images.unsplash.com/photo-1620277489055-11113c7c7ac1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-    count: 15,
-  },
-  {
-    name: "Roots",
-    image: "https://images.unsplash.com/photo-1636659554549-1a64e615eab3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
-    count: 12,
-  },
-];
+import React from 'react';
+import { Link } from 'react-router-dom';
+import ProductCard from '@/components/ProductCard';
+import { Button } from '@/components/ui/button';
+import { createMockProduct } from '@/types';
 
 const Index = () => {
+  // Mock products for development
+  const featuredProduct = createMockProduct({
+    id: "featured1",
+    name: "Organic Fresh Avocado",
+    description: "Creamy, delicious, and perfect for any meal. Our avocados are sourced from local farms.",
+    price: 2.99,
+    image: "https://images.unsplash.com/photo-1519162808019-7de1683fa2ad?q=80&w=1976&auto=format&fit=crop",
+    category: "fruits",
+    stock: 50,
+    unit: "each",
+    organic: true,
+    featured: true
+  });
+
+  const products = [
+    createMockProduct({
+      id: "prod1",
+      name: "Organic Spinach",
+      description: "Fresh organic spinach, perfect for salads and cooking.",
+      price: 3.99,
+      image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?q=80&w=1000&auto=format&fit=crop",
+      category: "greens",
+      stock: 30,
+      unit: "bunch",
+      organic: true
+    }),
+    createMockProduct({
+      id: "prod2",
+      name: "Red Bell Pepper",
+      description: "Sweet and crunchy red bell peppers.",
+      price: 1.49,
+      image: "https://images.unsplash.com/photo-1526470498-9ae73c665de8?q=80&w=1998&auto=format&fit=crop",
+      category: "vegetables",
+      stock: 40,
+      unit: "each",
+      discount: 10
+    }),
+    createMockProduct({
+      id: "prod3",
+      name: "Organic Carrots",
+      description: "Sweet and nutritious organic carrots.",
+      price: 2.49,
+      image: "https://images.unsplash.com/photo-1445282768818-728615cc910a?q=80&w=1770&auto=format&fit=crop",
+      category: "roots",
+      stock: 25,
+      unit: "bundle",
+      organic: true
+    }),
+    createMockProduct({
+      id: "prod4",
+      name: "Fresh Broccoli",
+      description: "Crisp and flavorful broccoli crowns.",
+      price: 2.29,
+      image: "https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?q=80&w=2002&auto=format&fit=crop",
+      category: "vegetables",
+      stock: 35,
+      unit: "head",
+      organic: true
+    })
+  ];
+
   return (
     <div className="animate-fade-in">
       {/* Hero Section */}
@@ -256,8 +232,8 @@ const Index = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <ProductCard product={featuredProducts[0]} featured />
-            {featuredProducts.slice(1, 5).map((product) => (
+            <ProductCard product={featuredProduct} featured />
+            {products.slice(1, 5).map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

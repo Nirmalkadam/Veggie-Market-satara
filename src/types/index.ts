@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   email: string;
@@ -99,5 +100,24 @@ export interface WebsiteSettings {
     enableCOD: boolean;
     enableOnlinePayment: boolean;
     enableReviews: boolean;
+  };
+}
+
+// Mock data helper function to avoid repeated type errors
+export function createMockProduct(data: Partial<Product>): Product {
+  return {
+    id: data.id || '00000000-0000-0000-0000-000000000000',
+    name: data.name || 'Product Name',
+    description: data.description || null,
+    price: data.price || 0,
+    stock: data.stock || 0,
+    image: data.image || null,
+    category: data.category || null,
+    organic: data.organic || null,
+    unit: data.unit || null,
+    created_at: data.created_at || new Date().toISOString(),
+    updated_at: data.updated_at || new Date().toISOString(),
+    discount: data.discount || null,
+    featured: data.featured || false
   };
 }

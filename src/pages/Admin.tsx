@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -13,6 +14,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -21,6 +23,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import {
   Card,
   CardContent,
@@ -63,20 +66,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useAdminData } from '@/hooks/useSupabaseData';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  stock: number;
-  image: string | null;
-  category: string | null;
-  organic: boolean | null;
-  unit: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-}
+import { Product } from '@/types';
 
 interface AdminPageProps {}
 
@@ -659,21 +649,27 @@ const Admin: React.FC<AdminPageProps> = () => {
                   )}
                 />
               </div>
-              <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel>Organic</FormLabel>
-                  <p className="text-sm text-muted-foreground">
-                    Is this product organic?
-                  </p>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+              <FormField
+                control={productForm.control}
+                name="organic"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Organic</FormLabel>
+                      <FormDescription className="text-sm text-muted-foreground">
+                        Is this product organic?
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <DialogFooter>
                 <Button type="submit">Add Product</Button>
               </DialogFooter>
@@ -787,21 +783,27 @@ const Admin: React.FC<AdminPageProps> = () => {
                   )}
                 />
               </div>
-              <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel>Organic</FormLabel>
-                  <p className="text-sm text-muted-foreground">
-                    Is this product organic?
-                  </p>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+              <FormField
+                control={productForm.control}
+                name="organic"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Organic</FormLabel>
+                      <FormDescription className="text-sm text-muted-foreground">
+                        Is this product organic?
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <DialogFooter>
                 <Button type="submit">Update Product</Button>
               </DialogFooter>

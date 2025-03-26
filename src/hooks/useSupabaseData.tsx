@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { isValidTable, TableName, TableRow, handleDatabaseError, safeCast } from './useDatabase';
+import { Product, Order, OrderItem, UserProfile } from '@/types';
 
 type SupabaseDataOptions = {
   realtime?: boolean;
@@ -28,7 +30,7 @@ export function useSupabaseData<T>(
       setLoading(true);
       
       const { data: fetchedData, error: fetchError } = await supabase
-        .from(tableName)
+        .from(tableName as TableName)
         .select('*');
       
       if (fetchError) {
@@ -55,7 +57,7 @@ export function useSupabaseData<T>(
 
     try {
       const { data: insertedData, error: insertError } = await supabase
-        .from(tableName)
+        .from(tableName as TableName)
         .insert(newItem as any)
         .select('*')
         .single();
@@ -85,7 +87,7 @@ export function useSupabaseData<T>(
 
     try {
       const { data: updatedData, error: updateError } = await supabase
-        .from(tableName)
+        .from(tableName as TableName)
         .update(updates as any)
         .eq('id', id as string)
         .select('*')
@@ -116,7 +118,7 @@ export function useSupabaseData<T>(
 
     try {
       const { error: deleteError } = await supabase
-        .from(tableName)
+        .from(tableName as TableName)
         .delete()
         .eq('id', id as string);
       
@@ -208,7 +210,7 @@ export function useSupabaseItem<T>(
       setLoading(true);
       
       const { data: fetchedData, error: fetchError } = await supabase
-        .from(tableName)
+        .from(tableName as TableName)
         .select('*')
         .eq('id', id)
         .single();
@@ -239,7 +241,7 @@ export function useSupabaseItem<T>(
     
     try {
       const { data: updatedData, error: updateError } = await supabase
-        .from(tableName)
+        .from(tableName as TableName)
         .update(updates as any)
         .eq('id', id)
         .select('*')
