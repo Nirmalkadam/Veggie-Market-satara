@@ -2,6 +2,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Database } from '@/integrations/supabase/types';
+
+type Tables = Database['public']['Tables'];
+type TableName = keyof Tables;
 
 type SupabaseDataOptions = {
   realtime?: boolean;
@@ -22,14 +26,14 @@ export function useSupabaseData<T>(
       setLoading(true);
       
       const { data: fetchedData, error: fetchError } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .select('*');
       
       if (fetchError) {
         throw fetchError;
       }
       
-      setData(fetchedData || []);
+      setData(fetchedData as T[] || []);
       setError(null);
     } catch (err: any) {
       console.error(`Error fetching ${tableName}:`, err);
@@ -44,8 +48,8 @@ export function useSupabaseData<T>(
   const addItem = async (newItem: Partial<T>) => {
     try {
       const { data: insertedData, error: insertError } = await supabase
-        .from(tableName)
-        .insert(newItem)
+        .from(tableName as any)
+        .insert(newItem as any)
         .select('*')
         .single();
       
@@ -69,9 +73,9 @@ export function useSupabaseData<T>(
   const updateItem = async (id: string | number, updates: Partial<T>) => {
     try {
       const { data: updatedData, error: updateError } = await supabase
-        .from(tableName)
-        .update(updates)
-        .eq('id', id)
+        .from(tableName as any)
+        .update(updates as any)
+        .eq('id', id as string)
         .select('*')
         .single();
       
@@ -95,9 +99,9 @@ export function useSupabaseData<T>(
   const deleteItem = async (id: string | number) => {
     try {
       const { error: deleteError } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .delete()
-        .eq('id', id);
+        .eq('id', id as string);
       
       if (deleteError) {
         throw deleteError;
@@ -123,7 +127,7 @@ export function useSupabaseData<T>(
     if (options.realtime) {
       const channel = supabase
         .channel(`public:${tableName}`)
-        .on('postgres_changes', {
+        .on('postgres_changes' as any, {
           event: options.realtimeEvents || ['INSERT', 'UPDATE', 'DELETE'],
           schema: 'public',
           table: tableName
@@ -180,7 +184,7 @@ export function useSupabaseItem<T>(
       setLoading(true);
       
       const { data: fetchedData, error: fetchError } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .select('*')
         .eq('id', id)
         .single();
@@ -206,8 +210,8 @@ export function useSupabaseItem<T>(
     
     try {
       const { data: updatedData, error: updateError } = await supabase
-        .from(tableName)
-        .update(updates)
+        .from(tableName as any)
+        .update(updates as any)
         .eq('id', id)
         .select('*')
         .single();
@@ -237,7 +241,7 @@ export function useSupabaseItem<T>(
       if (options.realtime) {
         const channel = supabase
           .channel(`public:${tableName}:id=eq.${id}`)
-          .on('postgres_changes', {
+          .on('postgres_changes' as any, {
             event: ['UPDATE', 'DELETE'],
             schema: 'public',
             table: tableName,
@@ -285,7 +289,7 @@ export function useUserOrders(userId: string | null) {
       
       // Fetch orders
       const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
+        .from('orders' as any)
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -301,7 +305,7 @@ export function useUserOrders(userId: string | null) {
       const ordersWithItems = await Promise.all(
         ordersData.map(async (order) => {
           const { data: orderItems, error: itemsError } = await supabase
-            .from('order_items')
+            .from('order_items' as any)
             .select(`
               id,
               quantity,
@@ -343,7 +347,7 @@ export function useUserOrders(userId: string | null) {
       // Set up realtime subscription for orders
       const channel = supabase
         .channel(`public:orders:user_id=eq.${userId}`)
-        .on('postgres_changes', {
+        .on('postgres_changes' as any, {
           event: ['INSERT', 'UPDATE', 'DELETE'],
           schema: 'public',
           table: 'orders',
@@ -408,7 +412,7 @@ export function useAdminData() {
       
       // First fetch all orders
       const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
+        .from('orders' as any)
         .select('*')
         .order('created_at', { ascending: false });
       
@@ -420,7 +424,7 @@ export function useAdminData() {
           try {
             // Get user profile
             const { data: userData, error: userError } = await supabase
-              .from('profiles')
+              .from('profiles' as any)
               .select('name, email:id')
               .eq('id', order.user_id)
               .single();
@@ -429,7 +433,7 @@ export function useAdminData() {
             
             // Get order items with product info
             const { data: orderItems, error: itemsError } = await supabase
-              .from('order_items')
+              .from('order_items' as any)
               .select(`
                 id,
                 quantity,
@@ -483,7 +487,7 @@ export function useAdminData() {
       
       // Fetch profiles
       const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
+        .from('profiles' as any)
         .select('*');
       
       if (profilesError) throw profilesError;
@@ -493,7 +497,7 @@ export function useAdminData() {
         (profilesData || []).map(async (profile) => {
           try {
             const { count, error: countError } = await supabase
-              .from('orders')
+              .from('orders' as any)
               .select('*', { count: 'exact', head: true })
               .eq('user_id', profile.id);
             
@@ -551,7 +555,7 @@ export function useAdminData() {
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
       const { data, error } = await supabase
-        .from('orders')
+        .from('orders' as any)
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', orderId)
         .select('*')
@@ -581,7 +585,7 @@ export function useAdminData() {
     // Set up realtime subscription for orders
     const ordersChannel = supabase
       .channel('admin-orders-changes')
-      .on('postgres_changes', {
+      .on('postgres_changes' as any, {
         event: ['INSERT', 'UPDATE', 'DELETE'],
         schema: 'public',
         table: 'orders'
@@ -594,7 +598,7 @@ export function useAdminData() {
     // Set up realtime subscription for profiles
     const profilesChannel = supabase
       .channel('admin-profiles-changes')
-      .on('postgres_changes', {
+      .on('postgres_changes' as any, {
         event: ['INSERT', 'UPDATE', 'DELETE'],
         schema: 'public',
         table: 'profiles'
