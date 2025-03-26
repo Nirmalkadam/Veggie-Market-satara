@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -27,19 +27,11 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
-  const { login, loading, user, isAuthenticated } = useAuth();
+  const { login, loading } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/');
-    }
-  }, [isAuthenticated, navigate]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -51,20 +43,11 @@ const Login = () => {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    // Clear previous errors
     setLoginError(null);
-    setIsSubmitting(true);
-    
     try {
       console.log("Attempting login with:", data.email);
       await login(data.email, data.password);
-      toast.success("Login successful!");
-      
-      // Only navigate if we're not already authenticated
-      // This prevents redundant navigation
-      if (!isAuthenticated) {
-        navigate('/');
-      }
+      navigate('/');
     } catch (error: any) {
       console.error('Login failed:', error);
       
@@ -74,15 +57,8 @@ const Login = () => {
       } else {
         setLoginError(error.message || 'Login failed. Please check your credentials.');
       }
-    } finally {
-      setIsSubmitting(false);
     }
   };
-
-  // If already authenticated, don't render the login form
-  if (isAuthenticated) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 animate-fade-in">
@@ -189,9 +165,9 @@ const Login = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isSubmitting}
+              disabled={loading}
             >
-              {isSubmitting ? (
+              {loading ? (
                 <span className="flex items-center">
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
