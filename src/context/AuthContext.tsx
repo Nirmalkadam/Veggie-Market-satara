@@ -129,6 +129,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (countError) {
           console.error("Error checking for admin:", countError);
+          setLoading(false);
           throw error; // Use original error
         }
         

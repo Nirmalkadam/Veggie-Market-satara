@@ -58,6 +58,7 @@ const Login = () => {
     try {
       console.log("Attempting login with:", data.email);
       await login(data.email, data.password);
+      toast.success("Login successful!");
       navigate('/');
     } catch (error: any) {
       console.error('Login failed:', error);
