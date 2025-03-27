@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,11 +27,23 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
-  const { login, loading } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Get the intended destination from the URL query params, or default to '/'
+  const from = new URLSearchParams(location.search).get('from') || '/';
+
+  // If user is already authenticated, redirect to home page
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate('/');
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -43,11 +55,17 @@ const Login = () => {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
+    if (isSubmitting) return;
+    
     setLoginError(null);
+    setIsSubmitting(true);
+    
     try {
       console.log("Attempting login with:", data.email);
       await login(data.email, data.password);
-      navigate('/');
+      
+      // Don't navigate here - we'll do it in the useEffect when isAuthenticated changes
+      toast.success('Login successful!');
     } catch (error: any) {
       console.error('Login failed:', error);
       
@@ -57,6 +75,8 @@ const Login = () => {
       } else {
         setLoginError(error.message || 'Login failed. Please check your credentials.');
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -165,9 +185,9 @@ const Login = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading}
+              disabled={isSubmitting}
             >
-              {loading ? (
+              {isSubmitting ? (
                 <span className="flex items-center">
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

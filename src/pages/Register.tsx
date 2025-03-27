@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 const registerSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
@@ -30,10 +31,19 @@ const registerSchema = z.object({
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const Register = () => {
-  const { register, loading } = useAuth();
+  const { register, loading, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+
+  // If user is already authenticated, redirect to home page
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate('/');
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -46,12 +56,28 @@ const Register = () => {
   });
 
   const onSubmit = async (data: RegisterFormValues) => {
+    if (isSubmitting) return;
+    
+    setRegisterError(null);
+    setIsSubmitting(true);
+    
     try {
       await register(data.email, data.password, data.name);
-      navigate('/');
-    } catch (error) {
-      // Error is displayed by the auth context
+      
+      // For admin, registration will automatically log them in
+      // For regular users, they'll need to verify email
+      if (data.email.toLowerCase() === 'admin@veggiemarket.com') {
+        navigate('/');
+      } else {
+        // Stay on the page for regular users to see the success message
+        form.reset();
+        toast.success('Registration successful! Please check your email to confirm your account.');
+      }
+    } catch (error: any) {
       console.error('Registration failed:', error);
+      setRegisterError(error.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -64,6 +90,12 @@ const Register = () => {
             Sign up to start shopping fresh vegetables
           </p>
         </div>
+
+        {registerError && (
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md mb-6">
+            <p className="text-sm">{registerError}</p>
+          </div>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -199,9 +231,9 @@ const Register = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading}
+              disabled={isSubmitting}
             >
-              {loading ? (
+              {isSubmitting ? (
                 <span className="flex items-center">
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

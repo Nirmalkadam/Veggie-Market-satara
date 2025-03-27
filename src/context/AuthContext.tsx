@@ -11,8 +11,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
-  updateUserProfile: (userData: Partial<User>) => void;
+  logout: () => Promise<void>;
+  updateUserProfile: (userData: Partial<User>) => Promise<void>;
   getAllUsers: () => Promise<User[]>;
 }
 
@@ -30,12 +30,53 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('Auth state change event:', event);
         setSession(session);
         
         if (session?.user) {
           // Get user profile from profiles table
+          // Use setTimeout to avoid recursive RLS policy evaluation
+          setTimeout(async () => {
+            try {
+              const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+              
+              if (error && error.code !== 'PGRST116') {
+                console.error('Error fetching user profile:', error);
+              }
+              
+              // Set user state with combined auth and profile data
+              setUser({
+                id: session.user.id,
+                email: session.user.email || '',
+                name: profile?.name || session.user.email?.split('@')[0] || 'User',
+                isAdmin: session.user.email === ADMIN_EMAIL, // Admin check
+              });
+              
+              setLoading(false);
+            } catch (err) {
+              console.error('Error in auth state change handler:', err);
+              setLoading(false);
+            }
+          }, 0);
+        } else {
+          setUser(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    // Check for existing session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // Get user profile data
           const { data: profile, error } = await supabase
             .from('profiles')
             .select('*')
@@ -45,50 +86,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (error && error.code !== 'PGRST116') {
             console.error('Error fetching user profile:', error);
           }
-          
-          // Set user state with combined auth and profile data
+
           setUser({
             id: session.user.id,
             email: session.user.email || '',
             name: profile?.name || session.user.email?.split('@')[0] || 'User',
             isAdmin: session.user.email === ADMIN_EMAIL, // Admin check
           });
-        } else {
-          setUser(null);
+          
+          setSession(session);
         }
-        
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+      } finally {
         setLoading(false);
       }
-    );
+    };
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        // Get user profile data
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-          .then(({ data: profile, error }) => {
-            if (error && error.code !== 'PGRST116') {
-              console.error('Error fetching user profile:', error);
-            }
-
-            setUser({
-              id: session.user.id,
-              email: session.user.email || '',
-              name: profile?.name || session.user.email?.split('@')[0] || 'User',
-              isAdmin: session.user.email === ADMIN_EMAIL, // Admin check
-            });
-            
-            setSession(session);
-            setLoading(false);
-          });
-      } else {
-        setLoading(false);
-      }
-    });
+    initializeAuth();
 
     return () => {
       subscription.unsubscribe();
@@ -113,8 +128,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // If login succeeds, we're done
       if (!error) {
         console.log("Login successful:", data);
-        toast.success(`Welcome back!`);
-        setLoading(false);
         return;
       }
       
@@ -123,51 +136,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log("Admin login failed, checking if admin exists");
         
         // Check for existing admin users using email instead of name
-        const { count, error: countError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .eq('name', 'Admin');
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: ADMIN_EMAIL,
+          password: ADMIN_PASSWORD,
+          options: {
+            data: { name: "Admin" }
+          }
+        });
         
-        if (countError) {
-          console.error("Error checking for admin:", countError);
-          throw error; // Use original error
+        if (signUpError) {
+          console.error("Error creating admin account:", signUpError);
+          throw signUpError;
         }
         
-        if (count === 0) {
-          console.log("Admin account doesn't exist, creating it");
-          
-          // Create admin account
-          const { data, error: signUpError } = await supabase.auth.signUp({
-            email: ADMIN_EMAIL,
-            password: ADMIN_PASSWORD,
-            options: {
-              data: { name: "Admin" }
-            }
-          });
-          
-          if (signUpError) {
-            console.error("Error creating admin account:", signUpError);
-            throw signUpError;
-          }
-          
-          // Log in with the newly created admin account
-          const { error: loginError } = await supabase.auth.signInWithPassword({
-            email: ADMIN_EMAIL,
-            password: ADMIN_PASSWORD,
-          });
-          
-          if (loginError) {
-            throw loginError;
-          }
-          
-          toast.success('Welcome, Admin!');
-          setLoading(false);
-          return;
-        } else {
-          // Admin exists but password might be wrong
-          toast.error("Admin account exists but password is incorrect");
-          throw new Error("Admin account exists but password is incorrect");
+        // Try logging in with admin credentials after creating the account
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+          email: ADMIN_EMAIL,
+          password: ADMIN_PASSWORD,
+        });
+        
+        if (loginError) {
+          throw loginError;
         }
+        
+        toast.success('Welcome, Admin!');
+        return;
       }
       
       // Handle other error cases
@@ -200,18 +193,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Check if user is trying to register with admin email
       if (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         // First check if admin already exists
-        const { data: userData } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: ADMIN_EMAIL,
           password,
         });
         
-        if (userData.user) {
+        if (data.user) {
           toast.error('Admin account already exists. Please login instead.');
           throw new Error('Admin account already exists');
         }
         
         // If admin doesn't exist, create and auto-login
-        const { data, error } = await supabase.auth.signUp({
+        const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -219,8 +212,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           },
         });
         
-        if (error) {
-          throw error;
+        if (signUpError) {
+          throw signUpError;
         }
         
         // For admin account, log them in immediately
@@ -278,18 +271,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = async () => {
-    // Clear all cart data for the current user 
-    if (user) {
-      localStorage.removeItem(`cart_${user.id}`);
+    try {
+      setLoading(true);
+      
+      // Clear all cart data for the current user 
+      if (user) {
+        localStorage.removeItem(`cart_${user.id}`);
+      }
+      
+      // Also clear guest cart data if any exists
+      localStorage.removeItem('cart_guest');
+      
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+      
+      toast.success('You have been logged out.');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error('Failed to log out. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    
-    // Also clear guest cart data if any exists
-    localStorage.removeItem('cart_guest');
-    
-    // Sign out from Supabase
-    await supabase.auth.signOut();
-    
-    toast.success('You have been logged out.');
   };
 
   const getAllUsers = async (): Promise<User[]> => {
