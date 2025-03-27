@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -129,6 +128,8 @@ const Admin: React.FC<AdminPageProps> = () => {
     revenue
   } = useAdminData();
 
+  console.log("Admin page data:", { orders, users });
+
   const products = productsData as Product[];
 
   const handleAddProduct = () => {
@@ -166,9 +167,8 @@ const Admin: React.FC<AdminPageProps> = () => {
   };
 
   const onSubmitProduct = async (data: ProductFormValues) => {
-    // Fix for error 1: Make sure required properties are included and not optional
     const productData = {
-      name: data.name, // This is required
+      name: data.name,
       description: data.description || null,
       price: data.price,
       stock: data.stock,
@@ -410,15 +410,13 @@ const Admin: React.FC<AdminPageProps> = () => {
                       {orders.map((order) => (
                         <TableRow key={order.id}>
                           <TableCell>
-                            {/* Fix for error 3: Fixed the access to email */}
-                            {order.user?.name || 'Unknown User'} 
-                            {order.user?.email ? `(${order.user.email})` : '(N/A)'}
+                            {order.user?.name || 'Unknown User'}
+                            {order.user ? ` (${order.user.email || 'N/A'})` : ''}
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             {new Date(order.created_at).toLocaleDateString()}
                           </TableCell>
                           <TableCell className="text-right">
-                            {/* Fix for error 2: Convert number to string for formatCurrency */}
                             {formatCurrency(parseFloat(String(order.total)))}
                           </TableCell>
                           <TableCell className="text-right hidden md:table-cell">{order.status}</TableCell>
@@ -436,7 +434,6 @@ const Admin: React.FC<AdminPageProps> = () => {
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>
-                                  {/* Implement order status update */}
                                   Update Status
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -491,11 +488,9 @@ const Admin: React.FC<AdminPageProps> = () => {
                     <TableBody>
                       {users.map((user) => (
                         <TableRow key={user.id}>
-                          <TableCell>{user.name}</TableCell>
-                          {/* Fix for error 3: We'll handle this more carefully */}
+                          <TableCell>{user.name || 'N/A'}</TableCell>
                           <TableCell className="hidden md:table-cell">
-                            {/* Since email is not in the UserProfile type, we'll display N/A */}
-                            N/A
+                            {user.email || 'N/A'}
                           </TableCell>
                           <TableCell className="text-right hidden md:table-cell">{user.orderCount}</TableCell>
                           <TableCell className="text-right">

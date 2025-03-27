@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -148,6 +149,7 @@ export const useOrders = () => {
       setLoading(true);
       setError(null);
 
+      console.log("Fetching orders...");
       const { data, error } = await supabase
         .from('orders')
         .select(`
@@ -156,24 +158,29 @@ export const useOrders = () => {
             *,
             products:product_id(*)
           ),
-          user:user_id(
-            name,
-            email
-          )
+          profiles:user_id(*)
         `)
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error("Error fetching orders:", error);
         throw error;
       }
 
+      console.log("Orders data:", data);
+      
       // Transform the data into the expected format
       const transformedOrders = data?.map((order) => {
-        // Handle potentially null values safely
-        const orderData = order as unknown as Order;
+        // Map the profiles data to user property
+        const orderData = {
+          ...order,
+          user: order.profiles || null
+        } as unknown as Order;
+        
         return orderData;
       }) || [];
 
+      console.log("Transformed orders:", transformedOrders);
       setOrders(transformedOrders);
     } catch (error: any) {
       console.error('Error fetching orders:', error);
@@ -254,14 +261,17 @@ export const useUserProfiles = () => {
       setLoading(true);
       setError(null);
 
+      console.log("Fetching user profiles...");
       const { data, error } = await supabase
         .from('profiles')
         .select('*');
 
       if (error) {
+        console.error("Error fetching profiles:", error);
         throw error;
       }
 
+      console.log("User profiles data:", data);
       setProfiles(data || []);
     } catch (error: any) {
       console.error('Error fetching user profiles:', error);
@@ -311,10 +321,16 @@ export const useAdminData = () => {
   const { profiles: userProfiles, loading: usersLoading, error: usersError, fetchProfiles } = useUserProfiles();
 
   // Transform user profiles to include order count
-  const users = userProfiles.map(profile => ({
-    ...profile,
-    orderCount: orders.filter(order => order.user_id === profile.id).length
-  }));
+  const users = userProfiles.map(profile => {
+    const userOrders = orders.filter(order => order.user_id === profile.id);
+    return {
+      ...profile,
+      orderCount: userOrders.length,
+      email: profile.email || 'N/A' // Add email if available
+    };
+  });
+
+  console.log("Transformed users with orders:", users);
 
   // Calculate revenue statistics
   const calculateRevenue = () => {
