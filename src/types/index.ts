@@ -70,6 +70,7 @@ export interface UserProfile {
   phone: string | null;
   created_at: string;
   is_admin: boolean | null;
+  email?: string | null; // Added email property
   orderCount?: number;
 }
 
