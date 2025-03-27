@@ -150,37 +150,67 @@ export const useOrders = () => {
       setError(null);
 
       console.log("Fetching orders...");
-      const { data, error } = await supabase
+      
+      // First, fetch the orders
+      const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select(`
-          *,
-          items:order_items(
-            *,
-            products:product_id(*)
-          ),
-          user:user_id(
-            *
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching orders:", error);
-        throw error;
+      if (ordersError) {
+        console.error("Error fetching orders:", ordersError);
+        throw ordersError;
       }
 
-      console.log("Orders data:", data);
+      // Then fetch the order items with product information
+      const { data: orderItemsData, error: itemsError } = await supabase
+        .from('order_items')
+        .select(`
+          *,
+          products:product_id(*)
+        `);
+
+      if (itemsError) {
+        console.error("Error fetching order items:", itemsError);
+        throw itemsError;
+      }
+
+      // Fetch profiles to get user information
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
+
+      console.log("Orders data:", ordersData);
+      console.log("Order items data:", orderItemsData);
+      console.log("Profiles data:", profilesData);
+
+      // Map profiles by ID for quick lookup
+      const profilesById = profilesData?.reduce((acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      }, {} as Record<string, UserProfile>) || {};
       
       // Transform the data into the expected format
-      const transformedOrders = data?.map((order) => {
-        // Map the profiles data to user property
+      const transformedOrders = ordersData?.map((order) => {
+        // Find all items for this order
+        const orderItems = orderItemsData?.filter(item => item.order_id === order.id) || [];
+        
+        // Find user profile for this order
+        const userProfile = profilesById[order.user_id];
+        
         const orderData = {
           ...order,
-          user: order.user ? {
-            name: order.user.name || 'Unknown User',
-            email: order.user.email || null
+          items: orderItems,
+          user: userProfile ? {
+            name: userProfile.name || 'Unknown User',
+            email: userProfile.email || null
           } : null
-        } as unknown as Order;
+        } as Order;
         
         return orderData;
       }) || [];
