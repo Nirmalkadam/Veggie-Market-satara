@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -434,31 +433,63 @@ export const useUserOrders = () => {
     try {
       setLoading(true);
       setError(null);
+      
+      console.log("Fetching orders for user:", user.id);
 
-      const { data, error } = await supabase
+      // First, fetch the orders for the current user
+      const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select(`
-          *,
-          items:order_items(
-            *,
-            products:product_id(*)
-          )
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        throw error;
+      if (ordersError) {
+        console.error("Error fetching user orders:", ordersError);
+        throw ordersError;
       }
 
-      setOrders(data || []);
+      // Then, fetch order items with product information
+      const { data: orderItemsData, error: itemsError } = await supabase
+        .from('order_items')
+        .select(`
+          *,
+          products:product_id(*)
+        `);
+
+      if (itemsError) {
+        console.error("Error fetching order items:", itemsError);
+        throw itemsError;
+      }
+
+      console.log("User orders data:", ordersData);
+      console.log("Order items data:", orderItemsData);
+      
+      // Transform the data into the expected format
+      const transformedOrders = ordersData?.map((order) => {
+        // Find all items for this order
+        const orderItems = orderItemsData?.filter(item => item.order_id === order.id) || [];
+        
+        const orderData = {
+          ...order,
+          items: orderItems,
+          user: {
+            name: user.name,
+            email: user.email
+          }
+        } as Order;
+        
+        return orderData;
+      }) || [];
+
+      console.log("Transformed user orders:", transformedOrders);
+      setOrders(transformedOrders);
     } catch (error: any) {
       console.error('Error fetching user orders:', error);
       setError(error.message || 'Failed to fetch orders');
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, user?.name, user?.email]);
 
   useEffect(() => {
     fetchOrders();
