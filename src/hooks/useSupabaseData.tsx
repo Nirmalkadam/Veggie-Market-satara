@@ -158,7 +158,9 @@ export const useOrders = () => {
             *,
             products:product_id(*)
           ),
-          profiles:user_id(*)
+          user:user_id(
+            *
+          )
         `)
         .order('created_at', { ascending: false });
 
@@ -174,7 +176,10 @@ export const useOrders = () => {
         // Map the profiles data to user property
         const orderData = {
           ...order,
-          user: order.profiles || null
+          user: order.user ? {
+            name: order.user.name || 'Unknown User',
+            email: order.user.email || null
+          } : null
         } as unknown as Order;
         
         return orderData;

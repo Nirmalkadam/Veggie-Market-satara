@@ -411,7 +411,7 @@ const Admin: React.FC<AdminPageProps> = () => {
                         <TableRow key={order.id}>
                           <TableCell>
                             {order.user?.name || 'Unknown User'}
-                            {order.user ? ` (${order.user.email || 'N/A'})` : ''}
+                            {order.user?.email ? ` (${order.user.email})` : ''}
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             {new Date(order.created_at).toLocaleDateString()}
