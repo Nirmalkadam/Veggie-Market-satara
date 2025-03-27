@@ -22,6 +22,7 @@ import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
 
 // Create QueryClient instance outside of component to avoid recreation on render
@@ -76,6 +77,7 @@ const AppRoutes = () => (
       </AdminRoute>
     } />
     <Route path="/profile" element={<Profile />} />
+    <Route path="/orders" element={<Orders />} />
     <Route path="/about" element={<About />} />
     <Route path="/contact" element={<Contact />} />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
