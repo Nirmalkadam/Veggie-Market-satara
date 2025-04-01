@@ -50,6 +50,10 @@ const checkoutSchema = z.object({
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
+const isValidUUID = (id: string): boolean => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+};
+
 const Checkout = () => {
   const { items, totalItems, subtotal, clearCart } = useCart();
   const { user, isAuthenticated } = useAuth();
@@ -131,12 +135,11 @@ const Checkout = () => {
       console.log('Order created:', orderData);
       
       // 2. Then, create order items for each product in the cart
-      // Ensure product IDs are valid UUIDs before insertion
       const orderItems = items.map(item => {
-        // Make sure product.id is a valid UUID 
-        if (!item.product.id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.product.id)) {
+        // Make sure product ID is a valid UUID before insertion
+        if (!isValidUUID(item.product.id)) {
           console.error(`Invalid product ID format: ${item.product.id}`);
-          throw new Error(`Invalid product ID format: ${item.product.id}. Expected a UUID.`);
+          throw new Error(`Product ID ${item.product.id} is not a valid UUID format.`);
         }
         
         return {
