@@ -31,6 +31,8 @@ import {
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { formatCurrency } from '@/lib/utils';
 
 const checkoutSchema = z.object({
   firstName: z.string().min(2, { message: 'First name is required' }),
@@ -60,13 +62,6 @@ const Checkout = () => {
   const shippingThreshold = 1000; // ₹1000
   const shippingCost = subtotal >= shippingThreshold ? 0 : 99; // ₹99 for shipping
   const total = subtotal + estimatedTax + shippingCost;
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
-  };
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -101,44 +96,79 @@ const Checkout = () => {
   }, [isAuthenticated, navigate]);
 
   const onSubmit = async (data: CheckoutFormValues) => {
+    if (!user) {
+      toast.error('You must be logged in to place an order');
+      navigate('/login?redirect=checkout');
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Calculate total amount
+      const orderTotal = total;
       
-      console.log('Order submitted:', data);
-      console.log('Order items:', items);
-      console.log('Order total:', total);
-      
-      // Save order to the user's order history
-      const existingOrders = JSON.parse(localStorage.getItem(`orders_${user?.id}`) || '[]');
-      const newOrder = {
-        id: `ORD${Date.now()}`,
-        date: new Date().toISOString(),
-        items: items,
-        total: total,
-        status: 'Processing',
-        shipping: {
-          name: `${data.firstName} ${data.lastName}`,
-          address: data.address,
+      // 1. First, create the order in the database
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          total: orderTotal,
+          status: 'pending',
+          street: data.address,
           city: data.city,
           state: data.state,
-          zipCode: data.zipCode,
+          zip_code: data.zipCode,
           country: data.country,
-        },
-        paymentMethod: 'Cash on Delivery'
-      };
+          payment_method: data.paymentMethod
+        })
+        .select()
+        .single();
+
+      if (orderError) {
+        throw new Error(`Failed to create order: ${orderError.message}`);
+      }
+
+      console.log('Order created:', orderData);
       
-      existingOrders.push(newOrder);
-      localStorage.setItem(`orders_${user?.id}`, JSON.stringify(existingOrders));
+      // 2. Then, create order items for each product in the cart
+      const orderItems = items.map(item => ({
+        order_id: orderData.id,
+        product_id: item.product.id,
+        quantity: item.quantity,
+        price: item.product.price
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) {
+        throw new Error(`Failed to create order items: ${itemsError.message}`);
+      }
+
+      // 3. Update product stock (optional, but good practice)
+      for (const item of items) {
+        const newStock = item.product.stock - item.quantity;
+        
+        const { error: stockError } = await supabase
+          .from('products')
+          .update({ stock: Math.max(0, newStock) })
+          .eq('id', item.product.id);
+
+        if (stockError) {
+          console.error(`Failed to update stock for product ${item.product.id}:`, stockError);
+          // We don't throw here to avoid stopping the order process
+        }
+      }
       
+      // Success! Clear cart and redirect
       toast.success('Your order has been placed successfully!');
-      
       clearCart();
-      navigate('/');
-    } catch (error) {
+      navigate('/orders');
+    } catch (error: any) {
       console.error('Order submission failed:', error);
-      toast.error('There was a problem placing your order. Please try again.');
+      toast.error(error.message || 'There was a problem placing your order. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

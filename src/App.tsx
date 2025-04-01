@@ -62,13 +62,44 @@ const AdminRoute = ({ children }: { children: JSX.Element }) => {
   return children;
 };
 
+// Protected route component for authenticated users
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { isAuthenticated, loading } = useAuth();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (!loading) {
+      setChecking(false);
+    }
+  }, [loading]);
+
+  if (checking) {
+    return <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Checking authentication...</p>
+      </div>
+    </div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/products" element={<Products />} />
     <Route path="/products/:id" element={<ProductDetail />} />
     <Route path="/cart" element={<Cart />} />
-    <Route path="/checkout" element={<Checkout />} />
+    <Route path="/checkout" element={
+      <ProtectedRoute>
+        <Checkout />
+      </ProtectedRoute>
+    } />
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
     <Route path="/admin" element={
@@ -76,8 +107,16 @@ const AppRoutes = () => (
         <Admin />
       </AdminRoute>
     } />
-    <Route path="/profile" element={<Profile />} />
-    <Route path="/orders" element={<Orders />} />
+    <Route path="/profile" element={
+      <ProtectedRoute>
+        <Profile />
+      </ProtectedRoute>
+    } />
+    <Route path="/orders" element={
+      <ProtectedRoute>
+        <Orders />
+      </ProtectedRoute>
+    } />
     <Route path="/about" element={<About />} />
     <Route path="/contact" element={<Contact />} />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

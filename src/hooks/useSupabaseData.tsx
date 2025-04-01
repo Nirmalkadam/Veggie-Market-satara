@@ -161,23 +161,37 @@ export const useOrders = () => {
         throw ordersError;
       }
 
+      if (!ordersData || ordersData.length === 0) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get all order IDs
+      const orderIds = ordersData.map(order => order.id);
+
       // Then fetch the order items with product information
       const { data: orderItemsData, error: itemsError } = await supabase
         .from('order_items')
         .select(`
           *,
           products:product_id(*)
-        `);
+        `)
+        .in('order_id', orderIds);
 
       if (itemsError) {
         console.error("Error fetching order items:", itemsError);
         throw itemsError;
       }
 
+      // Fetch user IDs from orders
+      const userIds = [...new Set(ordersData.map(order => order.user_id))];
+
       // Fetch profiles to get user information
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('*');
+        .select('*')
+        .in('id', userIds);
 
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
@@ -192,7 +206,7 @@ export const useOrders = () => {
       const profilesById = profilesData?.reduce((acc, profile) => {
         acc[profile.id] = profile;
         return acc;
-      }, {} as Record<string, UserProfile>) || {};
+      }, {} as Record<string, any>) || {};
       
       // Transform the data into the expected format
       const transformedOrders = ordersData?.map((order) => {
@@ -448,13 +462,24 @@ export const useUserOrders = () => {
         throw ordersError;
       }
 
+      if (!ordersData || ordersData.length === 0) {
+        console.log("No orders found for user:", user.id);
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get all order IDs to filter order items
+      const orderIds = ordersData.map(order => order.id);
+
       // Then, fetch order items with product information
       const { data: orderItemsData, error: itemsError } = await supabase
         .from('order_items')
         .select(`
           *,
           products:product_id(*)
-        `);
+        `)
+        .in('order_id', orderIds);
 
       if (itemsError) {
         console.error("Error fetching order items:", itemsError);
@@ -465,7 +490,7 @@ export const useUserOrders = () => {
       console.log("Order items data:", orderItemsData);
       
       // Transform the data into the expected format
-      const transformedOrders = ordersData?.map((order) => {
+      const transformedOrders = ordersData.map((order) => {
         // Find all items for this order
         const orderItems = orderItemsData?.filter(item => item.order_id === order.id) || [];
         
@@ -473,13 +498,13 @@ export const useUserOrders = () => {
           ...order,
           items: orderItems,
           user: {
-            name: user.name,
-            email: user.email
+            name: user.name || 'Unknown',
+            email: user.email || ''
           }
         } as Order;
         
         return orderData;
-      }) || [];
+      });
 
       console.log("Transformed user orders:", transformedOrders);
       setOrders(transformedOrders);
@@ -497,7 +522,7 @@ export const useUserOrders = () => {
     // Set up realtime subscription if user is authenticated
     if (user?.id) {
       const channel = supabase
-        .channel('orders-changes')
+        .channel('user-orders-changes')
         .on(
           'postgres_changes',
           {
@@ -518,5 +543,5 @@ export const useUserOrders = () => {
     }
   }, [fetchOrders, user?.id]);
 
-  return { orders, loading, error };
+  return { orders, loading, error, refetchOrders: fetchOrders };
 };

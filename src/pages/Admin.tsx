@@ -77,6 +77,10 @@ const Admin: React.FC<AdminPageProps> = () => {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [viewingOrderId, setViewingOrderId] = useState<string | null>(null);
+  const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
+  const [selectedOrderStatus, setSelectedOrderStatus] = useState('');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const productSchema = z.object({
     name: z.string().min(2, { message: 'Product name is required' }),
@@ -312,6 +316,29 @@ const Admin: React.FC<AdminPageProps> = () => {
     );
   };
 
+  const handleViewOrder = (orderId: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+      setViewingOrderId(orderId);
+      setSelectedOrderStatus(order.status);
+      setIsOrderDetailOpen(true);
+    }
+  };
+
+  const handleStatusUpdate = async () => {
+    if (!viewingOrderId || !selectedOrderStatus) return;
+    
+    setIsUpdatingStatus(true);
+    try {
+      await updateOrderStatus(viewingOrderId, selectedOrderStatus);
+      toast.success('Order status updated successfully');
+    } catch (error) {
+      toast.error('Failed to update order status');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <div className="mb-8">
@@ -399,45 +426,51 @@ const Admin: React.FC<AdminPageProps> = () => {
                     <TableCaption>All recent orders.</TableCaption>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Order ID</TableHead>
                         <TableHead>Customer</TableHead>
                         <TableHead className="hidden md:table-cell">Date</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
-                        <TableHead className="text-right hidden md:table-cell">Status</TableHead>
+                        <TableHead className="text-center">Status</TableHead>
                         <TableHead className="text-right"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {orders.map((order) => (
                         <TableRow key={order.id}>
+                          <TableCell className="font-medium">
+                            #{order.id.substring(0, 8)}
+                          </TableCell>
                           <TableCell>
                             {order.user?.name || 'Unknown User'}
-                            {order.user?.email ? ` (${order.user.email})` : ''}
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
                             {new Date(order.created_at).toLocaleDateString()}
                           </TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(parseFloat(String(order.total)))}
+                            {formatCurrency(Number(order.total))}
                           </TableCell>
-                          <TableCell className="text-right hidden md:table-cell">{order.status}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge 
+                              className={
+                                order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
+                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                              }
+                            >
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </Badge>
+                          </TableCell>
                           <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontalIcon className="h-4 w-4" />
-                                  <span className="sr-only">Actions</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                  Update Status
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleViewOrder(order.id)}
+                            >
+                              <EyeIcon className="h-4 w-4 mr-1" />
+                              View Details
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -844,6 +877,134 @@ const Admin: React.FC<AdminPageProps> = () => {
               Delete
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isOrderDetailOpen} onOpenChange={setIsOrderDetailOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Order Details</DialogTitle>
+            <DialogDescription>
+              View and manage order information.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewingOrderId && (
+            <div className="space-y-6">
+              {(() => {
+                const order = orders.find(o => o.id === viewingOrderId);
+                if (!order) return <p>Order not found</p>;
+                
+                return (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="font-medium text-sm text-muted-foreground mb-2">Order Information</h3>
+                        <div className="space-y-1">
+                          <p><span className="font-medium">Order ID:</span> #{order.id.substring(0, 8)}</p>
+                          <p><span className="font-medium">Date:</span> {new Date(order.created_at).toLocaleString()}</p>
+                          <p><span className="font-medium">Status:</span> {order.status}</p>
+                          <p><span className="font-medium">Total:</span> {formatCurrency(Number(order.total))}</p>
+                          <p><span className="font-medium">Payment Method:</span> {order.payment_method === 'cod' ? 'Cash on Delivery' : order.payment_method}</p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="font-medium text-sm text-muted-foreground mb-2">Customer Information</h3>
+                        <div className="space-y-1">
+                          <p><span className="font-medium">Name:</span> {order.user?.name || 'Unknown'}</p>
+                          <p><span className="font-medium">Email:</span> {order.user?.email || 'N/A'}</p>
+                          <p><span className="font-medium">Address:</span> {order.street}</p>
+                          <p><span className="font-medium">City:</span> {order.city}, {order.state} {order.zip_code}</p>
+                          <p><span className="font-medium">Country:</span> {order.country}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-medium text-sm text-muted-foreground mb-2">Order Items</h3>
+                      <div className="border rounded-md">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Product</TableHead>
+                              <TableHead className="text-right">Price</TableHead>
+                              <TableHead className="text-right">Quantity</TableHead>
+                              <TableHead className="text-right">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {order.items && order.items.map((item) => (
+                              <TableRow key={item.id}>
+                                <TableCell className="font-medium">
+                                  <div className="flex items-center">
+                                    <div className="h-10 w-10 bg-muted rounded-md overflow-hidden flex-shrink-0 mr-3">
+                                      {item.products?.image ? (
+                                        <img 
+                                          src={item.products.image} 
+                                          alt={item.products.name} 
+                                          className="h-full w-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="h-full w-full flex items-center justify-center bg-muted">
+                                          <PackageIcon className="h-4 w-4 text-muted-foreground" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    {item.products?.name || 'Unknown Product'}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-right">{formatCurrency(Number(item.price))}</TableCell>
+                                <TableCell className="text-right">{item.quantity}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(Number(item.price) * item.quantity)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-medium text-sm text-muted-foreground mb-2">Update Status</h3>
+                      <div className="flex items-center space-x-2">
+                        <Select 
+                          value={selectedOrderStatus} 
+                          onValueChange={setSelectedOrderStatus}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="processing">Processing</SelectItem>
+                            <SelectItem value="shipped">Shipped</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button 
+                          onClick={handleStatusUpdate} 
+                          disabled={isUpdatingStatus || selectedOrderStatus === order.status}
+                        >
+                          {isUpdatingStatus ? (
+                            <div className="flex items-center">
+                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Updating...
+                            </div>
+                          ) : (
+                            'Update Status'
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
