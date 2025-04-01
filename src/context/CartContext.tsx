@@ -16,6 +16,22 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Function to check if a string is a valid UUID
+const isValidUUID = (id: string): boolean => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+};
+
+// Function to convert string IDs to UUID format if needed
+const ensureValidUUID = (product: Product): Product => {
+  if (product.id && !isValidUUID(product.id)) {
+    // Generate a deterministic UUID based on the original ID
+    // This ensures the same product always gets the same UUID
+    const uuid = `00000000-0000-0000-0000-${product.id.padStart(12, '0')}`;
+    return { ...product, id: uuid };
+  }
+  return product;
+};
+
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItems>([]);
   const { user } = useAuth();
@@ -37,7 +53,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (savedCart) {
         try {
-          setItems(JSON.parse(savedCart));
+          // Ensure all product IDs are valid UUIDs
+          const parsedCart: CartItems = JSON.parse(savedCart);
+          const validatedCart = parsedCart.map(item => ({
+            ...item,
+            product: ensureValidUUID(item.product)
+          }));
+          setItems(validatedCart);
         } catch (error) {
           console.error('Failed to parse saved cart:', error);
           localStorage.removeItem(cartKey);
@@ -77,22 +99,25 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
     
+    // Ensure the product has a valid UUID
+    const validProduct = ensureValidUUID(product);
+    
     setItems(prevItems => {
-      const existingItem = prevItems.find(item => item.product.id === product.id);
+      const existingItem = prevItems.find(item => item.product.id === validProduct.id);
       
       if (existingItem) {
         // Update existing item quantity
         const updatedItems = prevItems.map(item => 
-          item.product.id === product.id
+          item.product.id === validProduct.id
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
-        toast.success(`Updated ${product.name} quantity in cart`);
+        toast.success(`Updated ${validProduct.name} quantity in cart`);
         return updatedItems;
       } else {
         // Add new item
-        toast.success(`Added ${product.name} to cart`);
-        return [...prevItems, { product, quantity }];
+        toast.success(`Added ${validProduct.name} to cart`);
+        return [...prevItems, { product: validProduct, quantity }];
       }
     });
   };
