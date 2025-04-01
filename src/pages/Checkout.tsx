@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -50,7 +51,9 @@ const checkoutSchema = z.object({
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
+// Stricter UUID validation
 const isValidUUID = (id: string): boolean => {
+  if (!id) return false;
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 };
 
@@ -108,6 +111,13 @@ const Checkout = () => {
     setIsSubmitting(true);
     
     try {
+      // Validate all product IDs before proceeding
+      const invalidProducts = items.filter(item => !isValidUUID(item.product.id));
+      if (invalidProducts.length > 0) {
+        const invalidNames = invalidProducts.map(item => item.product.name).join(', ');
+        throw new Error(`Some products have invalid IDs: ${invalidNames}. Please try removing and adding them again.`);
+      }
+      
       // Calculate total amount
       const orderTotal = total;
       
@@ -135,20 +145,12 @@ const Checkout = () => {
       console.log('Order created:', orderData);
       
       // 2. Then, create order items for each product in the cart
-      const orderItems = items.map(item => {
-        // Make sure product ID is a valid UUID before insertion
-        if (!isValidUUID(item.product.id)) {
-          console.error(`Invalid product ID format: ${item.product.id}`);
-          throw new Error(`Product ID ${item.product.id} is not a valid UUID format.`);
-        }
-        
-        return {
-          order_id: orderData.id,
-          product_id: item.product.id,
-          quantity: item.quantity,
-          price: item.product.price
-        };
-      });
+      const orderItems = items.map(item => ({
+        order_id: orderData.id,
+        product_id: item.product.id,
+        quantity: item.quantity,
+        price: item.product.price
+      }));
 
       const { error: itemsError } = await supabase
         .from('order_items')

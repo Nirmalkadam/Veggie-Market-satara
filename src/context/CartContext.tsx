@@ -22,14 +22,29 @@ const isValidUUID = (id: string): boolean => {
 };
 
 // Function to convert string IDs to UUID format if needed
-const ensureValidUUID = (product: Product): Product => {
-  if (product.id && !isValidUUID(product.id)) {
+const ensureValidUUID = (id: string): string => {
+  if (!isValidUUID(id)) {
+    // Remove any non-alphanumeric characters
+    const cleanId = id.replace(/[^a-zA-Z0-9]/g, '');
+    // Pad with zeros to ensure proper length
+    const paddedId = cleanId.padStart(12, '0');
     // Generate a deterministic UUID based on the original ID
-    // This ensures the same product always gets the same UUID
-    const uuid = `00000000-0000-0000-0000-${product.id.padStart(12, '0')}`;
-    return { ...product, id: uuid };
+    const uuid = `00000000-0000-0000-0000-${paddedId}`;
+    return uuid;
   }
-  return product;
+  return id;
+};
+
+// Function to sanitize product for database compatibility
+const sanitizeProduct = (product: Product): Product => {
+  if (!product.id) return product;
+  
+  const sanitizedId = ensureValidUUID(product.id);
+  
+  return {
+    ...product,
+    id: sanitizedId
+  };
 };
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -57,7 +72,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const parsedCart: CartItems = JSON.parse(savedCart);
           const validatedCart = parsedCart.map(item => ({
             ...item,
-            product: ensureValidUUID(item.product)
+            product: sanitizeProduct(item.product)
           }));
           setItems(validatedCart);
         } catch (error) {
@@ -100,24 +115,24 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
     
     // Ensure the product has a valid UUID
-    const validProduct = ensureValidUUID(product);
+    const sanitizedProduct = sanitizeProduct(product);
     
     setItems(prevItems => {
-      const existingItem = prevItems.find(item => item.product.id === validProduct.id);
+      const existingItem = prevItems.find(item => item.product.id === sanitizedProduct.id);
       
       if (existingItem) {
         // Update existing item quantity
         const updatedItems = prevItems.map(item => 
-          item.product.id === validProduct.id
+          item.product.id === sanitizedProduct.id
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
-        toast.success(`Updated ${validProduct.name} quantity in cart`);
+        toast.success(`Updated ${sanitizedProduct.name} quantity in cart`);
         return updatedItems;
       } else {
         // Add new item
-        toast.success(`Added ${validProduct.name} to cart`);
-        return [...prevItems, { product: validProduct, quantity }];
+        toast.success(`Added ${sanitizedProduct.name} to cart`);
+        return [...prevItems, { product: sanitizedProduct, quantity }];
       }
     });
   };
