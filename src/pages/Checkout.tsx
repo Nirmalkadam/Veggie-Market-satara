@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -132,18 +131,28 @@ const Checkout = () => {
       console.log('Order created:', orderData);
       
       // 2. Then, create order items for each product in the cart
-      const orderItems = items.map(item => ({
-        order_id: orderData.id,
-        product_id: item.product.id,
-        quantity: item.quantity,
-        price: item.product.price
-      }));
+      // Ensure product IDs are valid UUIDs before insertion
+      const orderItems = items.map(item => {
+        // Make sure product.id is a valid UUID 
+        if (!item.product.id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.product.id)) {
+          console.error(`Invalid product ID format: ${item.product.id}`);
+          throw new Error(`Invalid product ID format: ${item.product.id}. Expected a UUID.`);
+        }
+        
+        return {
+          order_id: orderData.id,
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price: item.product.price
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from('order_items')
         .insert(orderItems);
 
       if (itemsError) {
+        console.error("Failed to create order items:", itemsError);
         throw new Error(`Failed to create order items: ${itemsError.message}`);
       }
 
