@@ -9,21 +9,24 @@ import { Input } from '@/components/ui/input';
 import { createMockProduct } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { seedProducts } from '@/services/productService';
 
 const Products = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [priceRange, setPriceRange] = useState([0, 10]);
+  const [priceRange, setPriceRange] = useState([0, 20]);  // Increased upper limit to 20
   const [organicOnly, setOrganicOnly] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
+        console.log("Fetching products from Supabase...");
         const { data, error } = await supabase
           .from('products')
           .select('*')
@@ -33,11 +36,12 @@ const Products = () => {
           throw error;
         }
         
+        console.log("Fetched products:", data);
         setProducts(data || []);
       } catch (error) {
         console.error('Error fetching products:', error);
         toast.error('Failed to load products');
-        // Fallback to mock products if database fetch fails
+        setError(error.message);
         setProducts([]);
       } finally {
         setLoading(false);
@@ -72,7 +76,7 @@ const Products = () => {
         <div className="text-center py-16">
           <h2 className="text-xl font-medium mb-4">No Products Found</h2>
           <p className="text-muted-foreground mb-6">
-            It looks like there are no products in the database yet.
+            No products found in the database. Click below to add some sample products.
           </p>
           <Button onClick={() => navigate('/seed-products')}>
             Add Sample Products
@@ -144,7 +148,7 @@ const Products = () => {
 
           {filteredProducts.length === 0 && (
             <div className="text-center py-8">
-              <h3 className="text-lg font-medium">No products found</h3>
+              <h3 className="text-lg font-medium">No products match your filters</h3>
               <p className="text-muted-foreground">
                 Try adjusting your search or filter options.
               </p>

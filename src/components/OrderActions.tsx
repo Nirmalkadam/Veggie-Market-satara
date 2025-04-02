@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { 
@@ -24,13 +24,26 @@ interface OrderActionsProps {
 
 const OrderActions = ({ orderId, orderStatus, onStatusChange }: OrderActionsProps) => {
   const navigate = useNavigate();
+  const [isUpdating, setIsUpdating] = useState(false);
   
   const handleCancelOrder = async () => {
     try {
-      const { error } = await supabase
+      setIsUpdating(true);
+      
+      console.log("Cancelling order with ID:", orderId);
+      
+      // Check if the order ID is valid
+      if (!orderId || typeof orderId !== 'string') {
+        throw new Error('Invalid order ID');
+      }
+      
+      const { error, data } = await supabase
         .from('orders')
         .update({ status: 'cancelled' })
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .select();
+      
+      console.log("Update response:", { error, data });
       
       if (error) {
         throw error;
@@ -40,7 +53,9 @@ const OrderActions = ({ orderId, orderStatus, onStatusChange }: OrderActionsProp
       onStatusChange();
     } catch (error) {
       console.error('Error cancelling order:', error);
-      toast.error('Failed to cancel order');
+      toast.error('Failed to cancel order: ' + (error.message || 'Unknown error'));
+    } finally {
+      setIsUpdating(false);
     }
   };
   
@@ -51,8 +66,8 @@ const OrderActions = ({ orderId, orderStatus, onStatusChange }: OrderActionsProp
       {canCancel && (
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" size="sm">
-              Cancel Order
+            <Button variant="destructive" size="sm" disabled={isUpdating}>
+              {isUpdating ? 'Cancelling...' : 'Cancel Order'}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>

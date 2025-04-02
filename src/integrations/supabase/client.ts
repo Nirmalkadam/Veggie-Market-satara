@@ -24,21 +24,41 @@ export const supabase = createClient<Database>(
 
 // Helper function to ensure UUIDs are valid
 export const validateUUID = (id: string): boolean => {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  // More robust UUID validation
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return uuidRegex.test(id);
 };
 
-// Generate a deterministic UUID from a string
+// Generate a deterministic UUID from a string that follows the proper UUID format
 export const generateDeterministicUUID = (text: string): string => {
-  const cleanText = text.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-  const paddedText = cleanText.padStart(32, '0');
+  // If input is already a valid UUID, return it
+  if (validateUUID(text)) {
+    return text;
+  }
   
-  // Format as UUID
-  return [
-    paddedText.substring(0, 8),
-    paddedText.substring(8, 12),
-    paddedText.substring(12, 16),
-    paddedText.substring(16, 20),
-    paddedText.substring(20, 32)
-  ].join('-');
+  // Hash the text to create a consistent UUID-like string
+  const hash = function(s: string) {
+    let hash = 0;
+    for (let i = 0; i < s.length; i++) {
+      const char = s.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(16).padStart(8, '0');
+  };
+  
+  const cleanText = text.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const part1 = hash(cleanText).substring(0, 8);
+  const part2 = hash(cleanText + '1').substring(0, 4);
+  const part3 = '4' + hash(cleanText + '2').substring(0, 3); // Ensures version 4 UUID
+  const part4 = '8' + hash(cleanText + '3').substring(0, 3); // Ensures variant 8
+  const part5 = hash(cleanText + '4').substring(0, 12);
+  
+  // Format as proper UUID
+  return `${part1}-${part2}-${part3}-${part4}-${part5}`;
+};
+
+// Helper function to ensure product IDs are valid before database operations
+export const sanitizeProductId = (productId: string): string => {
+  return validateUUID(productId) ? productId : generateDeterministicUUID(productId);
 };
