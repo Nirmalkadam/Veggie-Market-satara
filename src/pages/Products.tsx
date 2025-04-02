@@ -19,7 +19,7 @@ const Products = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [priceRange, setPriceRange] = useState([0, 20]);  // Increased upper limit to 20
+  const [priceRange, setPriceRange] = useState([0, 20]);
   const [organicOnly, setOrganicOnly] = useState(false);
 
   useEffect(() => {
@@ -27,20 +27,27 @@ const Products = () => {
       setLoading(true);
       try {
         console.log("Fetching products from Supabase...");
+        
+        // Simple query without any filters
         const { data, error } = await supabase
           .from('products')
-          .select('*')
-          .order('name');
+          .select('*');
         
         if (error) {
           throw error;
         }
         
         console.log("Fetched products:", data);
-        setProducts(data || []);
+        
+        if (data && data.length > 0) {
+          setProducts(data);
+        } else {
+          console.log("No products found in database");
+          setProducts([]);
+        }
       } catch (error) {
         console.error('Error fetching products:', error);
-        toast.error('Failed to load products');
+        toast.error('Failed to load products: ' + error.message);
         setError(error.message);
         setProducts([]);
       } finally {
@@ -52,13 +59,21 @@ const Products = () => {
   }, []);
 
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    // Convert to lowercase for case-insensitive search
+    const productName = product.name ? product.name.toLowerCase() : '';
+    const searchLower = searchQuery.toLowerCase();
+    
+    const matchesSearch = productName.includes(searchLower);
     const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
     const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
     const matchesOrganic = !organicOnly || product.organic === true;
 
     return matchesSearch && matchesCategory && matchesPrice && matchesOrganic;
   });
+
+  const handleAddSampleProducts = () => {
+    navigate('/seed-products');
+  };
 
   if (loading) {
     return (
@@ -78,7 +93,7 @@ const Products = () => {
           <p className="text-muted-foreground mb-6">
             No products found in the database. Click below to add some sample products.
           </p>
-          <Button onClick={() => navigate('/seed-products')}>
+          <Button onClick={handleAddSampleProducts}>
             Add Sample Products
           </Button>
         </div>
@@ -117,7 +132,7 @@ const Products = () => {
               <label className="block text-sm font-medium text-gray-700">Price Range: ${priceRange[0]} - ${priceRange[1]}</label>
               <Slider
                 defaultValue={priceRange}
-                max={20}
+                max={200}  // Increased for more realistic prices
                 step={1}
                 onValueChange={value => setPriceRange(value)}
               />

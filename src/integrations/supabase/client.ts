@@ -12,12 +12,16 @@ export const supabase = createClient<Database>(
   SUPABASE_PUBLISHABLE_KEY,
   {
     auth: {
-      persistSession: true
+      persistSession: true,
+      autoRefreshToken: true
     },
     global: {
       headers: {
         'Content-Type': 'application/json'
       }
+    },
+    db: {
+      schema: 'public'
     }
   }
 );
@@ -62,3 +66,11 @@ export const generateDeterministicUUID = (text: string): string => {
 export const sanitizeProductId = (productId: string): string => {
   return validateUUID(productId) ? productId : generateDeterministicUUID(productId);
 };
+
+// Log connection status
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log("Auth state change event:", event);
+  if (session) {
+    console.log("User authenticated:", session.user.id);
+  }
+});
