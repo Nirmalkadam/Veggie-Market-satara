@@ -41,9 +41,9 @@ function App() {
   }
 
   return (
-    <Router>
-      <AuthProvider>
-        <CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <Router>
           <Navbar />
           <main className="min-h-screen">
             <Routes>
@@ -65,9 +65,9 @@ function App() {
           </main>
           <Footer />
           <Toaster position="top-right" richColors closeButton />
-        </CartProvider>
-      </AuthProvider>
-    </Router>
+        </Router>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 
