@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { createMockProduct } from '@/types';
@@ -19,7 +18,6 @@ const Products = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [priceRange, setPriceRange] = useState([0, 20]);
   const [organicOnly, setOrganicOnly] = useState(false);
 
   useEffect(() => {
@@ -28,7 +26,6 @@ const Products = () => {
       try {
         console.log("Fetching products from Supabase...");
         
-        // Simple query without any filters
         const { data, error } = await supabase
           .from('products')
           .select('*');
@@ -65,10 +62,9 @@ const Products = () => {
     
     const matchesSearch = productName.includes(searchLower);
     const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
-    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
     const matchesOrganic = !organicOnly || product.organic === true;
 
-    return matchesSearch && matchesCategory && matchesPrice && matchesOrganic;
+    return matchesSearch && matchesCategory && matchesOrganic;
   });
 
   const handleAddSampleProducts = () => {
@@ -100,7 +96,7 @@ const Products = () => {
       ) : (
         <>
           {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             {/* Search */}
             <div className="md:col-span-1">
               <Input
@@ -125,17 +121,6 @@ const Products = () => {
                 <option value="roots">Roots</option>
                 <option value="greens">Greens</option>
               </select>
-            </div>
-
-            {/* Price Range */}
-            <div className="md:col-span-1">
-              <label className="block text-sm font-medium text-gray-700">Price Range: ${priceRange[0]} - ${priceRange[1]}</label>
-              <Slider
-                defaultValue={priceRange}
-                max={200}  // Increased for more realistic prices
-                step={1}
-                onValueChange={value => setPriceRange(value)}
-              />
             </div>
 
             {/* Organic Only */}
