@@ -93,9 +93,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 
   const addItem = (product: Product, quantity = 1) => {
-    // Prevent admin users from adding items
+    // Silently return for admin users without showing any error toast
     if (user?.isAdmin) {
-      toast.error("Admin users cannot add items to cart");
       return;
     }
     

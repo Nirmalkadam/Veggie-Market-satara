@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Check, Heart, ShoppingCart, Share2, ArrowLeft } from 'lucide-react';
@@ -19,14 +20,19 @@ import { createMockProduct, Product } from '@/types';
 import { getProductById } from '@/services/productService';
 import { generateDeterministicUUID } from '@/integrations/supabase/client';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { addItem } = useCart();
+  const { user } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Check if user is admin
+  const isAdmin = user?.isAdmin || false;
   
   useEffect(() => {
     const fetchProduct = async () => {
@@ -123,7 +129,7 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (product) {
       addItem(product, quantity);
-      toast.success(`${quantity} ${product.name} added to cart!`);
+      // The success toast will be shown in the CartContext
     }
   };
 
@@ -210,10 +216,18 @@ const ProductDetail = () => {
               </Button>
             </div>
           </div>
-          <Button className="w-full mt-4" onClick={handleAddToCart}>
-            <ShoppingCart className="mr-2 h-4 w-4" />
-            Add to Cart
-          </Button>
+          
+          {/* Only show Add to Cart button for non-admin users */}
+          {!isAdmin ? (
+            <Button className="w-full mt-4" onClick={handleAddToCart}>
+              <ShoppingCart className="mr-2 h-4 w-4" />
+              Add to Cart
+            </Button>
+          ) : (
+            <div className="w-full mt-4 p-2 text-center bg-gray-100 rounded-md text-gray-500">
+              Admin mode - cannot add to cart
+            </div>
+          )}
 
           <Separator className="my-4" />
 
