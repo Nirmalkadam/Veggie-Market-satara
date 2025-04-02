@@ -13,6 +13,32 @@ export const supabase = createClient<Database>(
   {
     auth: {
       persistSession: true
+    },
+    global: {
+      headers: {
+        'Content-Type': 'application/json'
+      }
     }
   }
 );
+
+// Helper function to ensure UUIDs are valid
+export const validateUUID = (id: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+};
+
+// Generate a deterministic UUID from a string
+export const generateDeterministicUUID = (text: string): string => {
+  const cleanText = text.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const paddedText = cleanText.padStart(32, '0');
+  
+  // Format as UUID
+  return [
+    paddedText.substring(0, 8),
+    paddedText.substring(8, 12),
+    paddedText.substring(12, 16),
+    paddedText.substring(16, 20),
+    paddedText.substring(20, 32)
+  ].join('-');
+};

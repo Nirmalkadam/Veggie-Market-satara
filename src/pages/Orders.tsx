@@ -21,10 +21,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import OrderActions from '@/components/OrderActions';
 
 const Orders = () => {
   const { user, isAuthenticated } = useAuth();
-  const { orders, loading, error } = useUserOrders();
+  const { orders, loading, error, refetchOrders } = useUserOrders();
   const navigate = useNavigate();
 
   // Redirect to login if not authenticated
@@ -182,6 +183,14 @@ const Orders = () => {
                         <div className="flex justify-between font-medium">
                           <span>Total:</span>
                           <span>{formatCurrency(Number(order.total))}</span>
+                        </div>
+                        
+                        <div className="pt-4">
+                          <OrderActions 
+                            orderId={order.id}
+                            orderStatus={order.status}
+                            onStatusChange={refetchOrders}
+                          />
                         </div>
                       </div>
                     </div>

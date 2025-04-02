@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { toast } from 'sonner';
 import { Product, CartItem, CartItems } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import { validateUUID, generateDeterministicUUID } from '@/integrations/supabase/client';
 
 interface CartContextType {
   items: CartItems;
@@ -16,30 +17,14 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Function to check if a string is a valid UUID
-const isValidUUID = (id: string): boolean => {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-};
-
-// Function to convert string IDs to UUID format if needed
-const ensureValidUUID = (id: string): string => {
-  if (!isValidUUID(id)) {
-    // Remove any non-alphanumeric characters
-    const cleanId = id.replace(/[^a-zA-Z0-9]/g, '');
-    // Pad with zeros to ensure proper length
-    const paddedId = cleanId.padStart(12, '0');
-    // Generate a deterministic UUID based on the original ID
-    const uuid = `00000000-0000-0000-0000-${paddedId}`;
-    return uuid;
-  }
-  return id;
-};
-
 // Function to sanitize product for database compatibility
 const sanitizeProduct = (product: Product): Product => {
   if (!product.id) return product;
   
-  const sanitizedId = ensureValidUUID(product.id);
+  // If the product id is not a valid UUID, generate a deterministic UUID
+  const sanitizedId = validateUUID(product.id) 
+    ? product.id 
+    : generateDeterministicUUID(product.id);
   
   return {
     ...product,
