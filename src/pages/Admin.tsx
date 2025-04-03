@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTable, useSortBy, useGlobalFilter, Column } from 'react-table';
-import { useAsyncDebounce } from 'react-table';
 import { useAuth } from '@/context/AuthContext';
 import { useAdminData } from '@/hooks/useSupabaseData';
 import { formatCurrency } from '@/lib/utils';
@@ -72,6 +71,7 @@ const Admin = () => {
   const [selectedTab, setSelectedTab] = useState("dashboard");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
+  const [searchFilter, setSearchFilter] = useState("");
 
   useEffect(() => {
     if (!isAuthenticated || !user?.isAdmin) {
@@ -119,64 +119,24 @@ const Admin = () => {
   };
 
   const UserTable = () => {
-    const columns = React.useMemo(
-      () => [
-        {
-          Header: 'Name',
-          accessor: 'name',
-        },
-        {
-          Header: 'Email',
-          accessor: 'email',
-        },
-        {
-          Header: 'Order Count',
-          accessor: 'orderCount',
-        },
-      ],
-      []
-    );
-
-    const {
-      getTableProps,
-      getTableBodyProps,
-      headerGroups,
-      rows,
-      prepareRow,
-    } = useTable({
-      columns,
-      data: users || [],
-    });
-
     return (
       <div className="overflow-x-auto">
-        <Table {...getTableProps()}>
+        <Table>
           <TableHeader>
-            {headerGroups.map(headerGroup => (
-              <TableRow {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map(column => (
-                  <TableHead {...column.getHeaderProps()}>
-                    {column.render('Header')}
-                  </TableHead>
-                ))}
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Order Count</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users && users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>{user.name}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.orderCount}</TableCell>
               </TableRow>
             ))}
-          </TableHeader>
-          <TableBody {...getTableBodyProps()}>
-            {rows.map(row => {
-              prepareRow(row)
-              return (
-                <TableRow {...row.getRowProps()}>
-                  {row.cells.map(cell => {
-                    return (
-                      <TableCell {...cell.getCellProps()}>
-                        {cell.render('Cell')}
-                      </TableCell>
-                    )
-                  })}
-                </TableRow>
-              )
-            })}
           </TableBody>
         </Table>
       </div>
@@ -184,139 +144,66 @@ const Admin = () => {
   };
 
   const OrderTable = () => {
-    const columns = React.useMemo(
-      () => [
-        {
-          Header: 'Order ID',
-          accessor: 'id',
-          Cell: ({ value }) => `#${value.substring(0, 8)}`,
-        },
-        {
-          Header: 'User',
-          accessor: (row) => row.user?.name || 'Guest',
-        },
-        {
-          Header: 'Date',
-          accessor: 'created_at',
-          Cell: ({ value }) => formatDate(value),
-        },
-        {
-          Header: 'Total',
-          accessor: 'total',
-          Cell: ({ value }) => formatCurrency(Number(value)),
-        },
-        {
-          Header: 'Status',
-          accessor: 'status',
-          Cell: ({ value }) => (
-            <Badge className={getStatusColor(value)}>
-              {value.toUpperCase()}
-            </Badge>
-          ),
-        },
-        {
-          Header: 'Actions',
-          Cell: ({ row }) => (
-            <Button variant="ghost" size="sm" onClick={() => viewOrderDetails(row.original)}>
-              View
-            </Button>
-          ),
-        },
-      ],
-      [getStatusColor, formatDate, viewOrderDetails]
-    );
-
-    const {
-      getTableProps,
-      getTableBodyProps,
-      headerGroups,
-      rows,
-      prepareRow,
-      state,
-      setGlobalFilter,
-    } = useTable(
-      {
-        columns,
-        data: orders || [],
-      },
-      useGlobalFilter,
-      useSortBy
-    );
+    const filteredOrders = orders 
+      ? orders.filter(order => 
+          order.id.toLowerCase().includes(searchFilter.toLowerCase()) ||
+          (order.user?.name && order.user.name.toLowerCase().includes(searchFilter.toLowerCase())) ||
+          order.status.toLowerCase().includes(searchFilter.toLowerCase())
+        )
+      : [];
+    
+    const handleSort = (column: string) => {
+      // Sorting logic can be implemented here if needed
+      console.log("Sort by", column);
+    };
 
     return (
       <>
-        <GlobalFilter
-          preGlobalFilteredRows={orders}
-          globalFilter={state.globalFilter}
-          setGlobalFilter={setGlobalFilter}
-        />
+        <div className="mb-4">
+          <Input
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            placeholder={`Search ${orders ? orders.length : 0} orders...`}
+            className="max-w-md"
+          />
+        </div>
         <div className="overflow-x-auto">
-          <Table {...getTableProps()}>
+          <Table>
             <TableHeader>
-              {headerGroups.map(headerGroup => (
-                <TableRow {...headerGroup.getHeaderGroupProps()}>
-                  {headerGroup.headers.map(column => (
-                    <TableHead {...column.getHeaderProps(column.getSortByToggleProps())}>
-                      {column.render('Header')}
-                      <span>
-                        {column.isSorted
-                          ? column.isSortedDesc
-                            ? ' 🔽'
-                            : ' 🔼'
-                          : ''}
-                      </span>
-                    </TableHead>
-                  ))}
+              <TableRow>
+                <TableHead onClick={() => handleSort('id')}>Order ID</TableHead>
+                <TableHead onClick={() => handleSort('user')}>User</TableHead>
+                <TableHead onClick={() => handleSort('created_at')}>Date</TableHead>
+                <TableHead onClick={() => handleSort('total')}>Total</TableHead>
+                <TableHead onClick={() => handleSort('status')}>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredOrders.map(order => (
+                <TableRow key={order.id}>
+                  <TableCell>#{order.id.substring(0, 8)}</TableCell>
+                  <TableCell>{order.user?.name || 'Guest'}</TableCell>
+                  <TableCell>{formatDate(order.created_at)}</TableCell>
+                  <TableCell>{formatCurrency(Number(order.total))}</TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(order.status)}>
+                      {order.status.toUpperCase()}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm" onClick={() => viewOrderDetails(order)}>
+                      View
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
-            </TableHeader>
-            <TableBody {...getTableBodyProps()}>
-              {rows.map(row => {
-                prepareRow(row)
-                return (
-                  <TableRow {...row.getRowProps()}>
-                    {row.cells.map(cell => {
-                      return (
-                        <TableCell {...cell.getCellProps()}>
-                          {cell.render('Cell')}
-                        </TableCell>
-                      )
-                    })}
-                  </TableRow>
-                )
-              })}
             </TableBody>
           </Table>
         </div>
       </>
     );
   };
-
-  function GlobalFilter({
-    preGlobalFilteredRows,
-    globalFilter,
-    setGlobalFilter,
-  }) {
-    const count = preGlobalFilteredRows.length
-    const [value, setValue] = React.useState(globalFilter)
-    const onChange = useAsyncDebounce(value => {
-      setGlobalFilter(value || undefined)
-    }, 200)
-
-    return (
-      <div className="mb-4">
-        <Input
-          value={value || ""}
-          onChange={e => {
-            setValue(e.target.value);
-            onChange(e.target.value);
-          }}
-          placeholder={`Search ${count} orders...`}
-          className="max-w-md"
-        />
-      </div>
-    )
-  }
 
   if (!isAuthenticated || !user?.isAdmin) {
     return null;
