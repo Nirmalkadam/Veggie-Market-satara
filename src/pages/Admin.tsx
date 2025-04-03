@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -179,27 +178,37 @@ const Admin: React.FC<AdminPageProps> = () => {
   };
 
   const onSubmitProduct = async (data: ProductFormValues) => {
-    const productData = {
-      name: data.name,
-      description: data.description || null,
-      price: data.price,
-      stock: data.stock,
-      image: data.image || null,
-      category: data.category || null,
-      organic: data.organic || false,
-      unit: data.unit || null
-    };
+    try {
+      console.log("Submitting product data:", data);
+      
+      const productData = {
+        name: data.name,
+        description: data.description || '',
+        price: data.price,
+        stock: data.stock,
+        image: data.image || '',
+        category: data.category || '',
+        organic: data.organic || false,
+        unit: data.unit || ''
+      };
 
-    if (selectedProductId) {
-      await updateProduct(selectedProductId, productData);
-      toast.success('Product updated successfully!');
-      setIsProductEditOpen(false);
-    } else {
-      await addProduct(productData);
-      toast.success('Product added successfully!');
-      setIsProductDialogOpen(false);
+      if (selectedProductId) {
+        await updateProduct(selectedProductId, productData);
+        toast.success('Product updated successfully!');
+        setIsProductEditOpen(false);
+      } else {
+        const result = await addProduct(productData);
+        console.log("Product added result:", result);
+        toast.success('Product added successfully!');
+        setIsProductDialogOpen(false);
+      }
+      
+      // Refresh products list
+      await fetchProducts();
+    } catch (error) {
+      console.error("Error submitting product:", error);
+      toast.error('Failed to save product. Please try again.');
     }
-    fetchProducts();
   };
 
   const renderProductCard = (product: Product) => {

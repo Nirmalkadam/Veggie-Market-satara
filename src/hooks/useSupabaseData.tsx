@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -36,6 +37,8 @@ export const useProducts = () => {
 
   const addProduct = useCallback(async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      console.log('Adding product to database:', product);
+      
       const { data, error } = await supabase
         .from('products')
         .insert([product])
@@ -43,10 +46,15 @@ export const useProducts = () => {
         .single();
 
       if (error) {
+        console.error('Supabase error adding product:', error);
         throw error;
       }
 
+      console.log('Product added successfully:', data);
+      
+      // Update local state with the new product
       setProducts(prev => [data as Product, ...prev]);
+      
       toast.success('Product added successfully');
       return data;
     } catch (error: any) {
