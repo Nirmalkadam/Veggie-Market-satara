@@ -1,29 +1,10 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { 
-  Eye as EyeIcon,
-  Pencil as PencilIcon,
-  Trash2 as TrashIcon,
-  Package as PackageIcon,
-  MoreHorizontal as MoreHorizontalIcon
-} from 'lucide-react';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
+import { useTable, useSortBy, useGlobalFilter, Column } from 'react-table';
+import { useAsyncDebounce } from 'react-table';
+import { useAuth } from '@/context/AuthContext';
+import { useAdminData } from '@/hooks/useSupabaseData';
+import { formatCurrency } from '@/lib/utils';
 import {
   Card,
   CardContent,
@@ -31,29 +12,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Input } from "@/components/ui/input"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs";
-import { Badge } from '@/components/ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/tabs"
 import {
   Dialog,
   DialogContent,
@@ -61,430 +36,383 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import OrderActions from '@/components/OrderActions';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useAuth } from '@/context/AuthContext';
-import { useAdminData } from '@/hooks/useSupabaseData';
-import { toast } from 'sonner';
-import { formatCurrency } from '@/lib/utils';
-import { Product, UserProfile } from '@/types';
+  Package as PackageIcon,
+  Calendar as CalendarIcon,
+  Clock as ClockIcon,
+  CreditCard as CreditCardIcon,
+  Truck as TruckIcon,
+  User,
+  ShoppingCart,
+  DollarSign,
+  TrendingUp
+} from 'lucide-react';
 
-interface AdminPageProps {}
-
-const Admin: React.FC<AdminPageProps> = () => {
+const Admin = () => {
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('products');
-  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
-  const [isProductEditOpen, setIsProductEditOpen] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [productToDelete, setProductToDelete] = useState<string | null>(null);
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
-  const [viewingOrderId, setViewingOrderId] = useState<string | null>(null);
-  const [isOrderDetailOpen, setIsOrderDetailOpen] = useState(false);
-  const [selectedOrderStatus, setSelectedOrderStatus] = useState('');
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-
-  const productSchema = z.object({
-    name: z.string().min(2, { message: 'Product name is required' }),
-    description: z.string().optional(),
-    price: z.number().min(0, { message: 'Price must be a positive number' }),
-    stock: z.number().min(0, { message: 'Stock must be a positive number' }),
-    image: z.string().optional(),
-    category: z.string().optional(),
-    organic: z.boolean().optional(),
-    unit: z.string().optional(),
-  });
-
-  type ProductFormValues = z.infer<typeof productSchema>;
-
-  const productForm = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      price: 0,
-      stock: 0,
-      image: '',
-      category: '',
-      organic: false,
-      unit: '',
-    },
-  });
-
   const {
-    products: productsData,
+    products,
     productsLoading,
     productsError,
-    fetchProducts,
-    addProduct,
-    updateProduct,
-    deleteProduct,
-    
     orders,
     ordersLoading,
     ordersError,
-    fetchOrders,
-    updateOrderStatus,
-    
     users,
     usersLoading,
     usersError,
-    fetchUsers,
-    
-    revenue
+    revenue,
+    fetchOrders
   } = useAdminData();
 
-  console.log("Admin page data:", { orders, users });
+  const [selectedTab, setSelectedTab] = useState("dashboard");
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
 
-  const products = productsData as Product[];
-
-  const handleAddProduct = () => {
-    productForm.reset();
-    setSelectedProductId(null);
-    setIsProductDialogOpen(true);
-  };
-
-  const handleEditProduct = (product: Product) => {
-    productForm.reset(product);
-    setSelectedProductId(product.id);
-    setIsProductEditOpen(true);
-  };
-
-  const handleViewProduct = (productId: string) => {
-    navigate(`/products/${productId}`);
-  };
-
-  const handleDeleteProduct = (productId: string) => {
-    setProductToDelete(productId);
-    setIsDeleteConfirmationOpen(true);
-  };
-
-  const confirmDeleteProduct = async () => {
-    if (productToDelete) {
-      await deleteProduct(productToDelete);
-      setIsDeleteConfirmationOpen(false);
-      setProductToDelete(null);
+  useEffect(() => {
+    if (!isAuthenticated || !user?.isAdmin) {
+      navigate('/login');
     }
+  }, [isAuthenticated, user, navigate]);
+
+  const handleTabChange = (value: string) => {
+    setSelectedTab(value);
   };
 
-  const cancelDeleteProduct = () => {
-    setIsDeleteConfirmationOpen(false);
-    setProductToDelete(null);
+  const viewOrderDetails = (order: any) => {
+    setSelectedOrder(order);
+    setIsOrderDialogOpen(true);
   };
 
-  const onSubmitProduct = async (data: ProductFormValues) => {
-    const productData = {
-      name: data.name,
-      description: data.description || null,
-      price: data.price,
-      stock: data.stock,
-      image: data.image || null,
-      category: data.category || null,
-      organic: data.organic || false,
-      unit: data.unit || null
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     };
-
-    if (selectedProductId) {
-      await updateProduct(selectedProductId, productData);
-      toast.success('Product updated successfully!');
-      setIsProductEditOpen(false);
-    } else {
-      await addProduct(productData);
-      toast.success('Product added successfully!');
-      setIsProductDialogOpen(false);
-    }
-    fetchProducts();
+    return new Date(dateString).toLocaleDateString('en-IN', options);
   };
 
-  const renderProductCard = (product: Product) => {
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'bg-gray-100 text-gray-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      case 'shipped':
+        return 'bg-purple-100 text-purple-800';
+      case 'delivered':
+        return 'bg-green-100 text-green-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const UserTable = () => {
+    const columns = React.useMemo(
+      () => [
+        {
+          Header: 'Name',
+          accessor: 'name',
+        },
+        {
+          Header: 'Email',
+          accessor: 'email',
+        },
+        {
+          Header: 'Order Count',
+          accessor: 'orderCount',
+        },
+      ],
+      []
+    );
+
+    const {
+      getTableProps,
+      getTableBodyProps,
+      headerGroups,
+      rows,
+      prepareRow,
+    } = useTable({
+      columns,
+      data: users || [],
+    });
+
     return (
-      <div key={product.id} className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="relative h-48 w-full bg-gray-200">
-          {product.image ? (
-            <img 
-              src={product.image} 
-              alt={product.name} 
-              className="h-full w-full object-cover" 
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full w-full bg-gray-100">
-              <PackageIcon className="h-12 w-12 text-gray-400" />
-            </div>
-          )}
-        </div>
-        <div className="p-4">
-          <h3 className="text-lg font-medium truncate">{product.name}</h3>
-          
-          <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-            {product.description || 'No description available'}
-          </p>
-          
-          <div className="mt-3 flex items-center justify-between">
-            <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
-              {product.category || 'Uncategorized'}
-            </span>
-            <span className={`${product.organic ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} px-2 py-1 text-xs rounded-full`}>
-              {product.organic ? 'Organic' : 'Non-Organic'}
-            </span>
-          </div>
-          
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-lg font-bold text-primary">
-              ₹{product.price.toFixed(2)}
-            </span>
-            <span className="text-sm text-gray-600">
-              {product.stock} in stock ({product.unit || 'item'})
-            </span>
-          </div>
-          
-          <div className="mt-4 flex justify-between gap-2">
-            <Button 
-              size="sm" 
-              variant="outline"
-              className="flex-1"
-              onClick={() => handleEditProduct(product)}
-            >
-              <PencilIcon className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
-            <Button 
-              size="sm" 
-              variant="destructive"
-              className="flex-1"
-              onClick={() => handleDeleteProduct(product.id)}
-            >
-              <TrashIcon className="h-4 w-4 mr-1" />
-              Delete
-            </Button>
-          </div>
-        </div>
+      <div className="overflow-x-auto">
+        <Table {...getTableProps()}>
+          <TableHeader>
+            {headerGroups.map(headerGroup => (
+              <TableRow {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers.map(column => (
+                  <TableHead {...column.getHeaderProps()}>
+                    {column.render('Header')}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody {...getTableBodyProps()}>
+            {rows.map(row => {
+              prepareRow(row)
+              return (
+                <TableRow {...row.getRowProps()}>
+                  {row.cells.map(cell => {
+                    return (
+                      <TableCell {...cell.getCellProps()}>
+                        {cell.render('Cell')}
+                      </TableCell>
+                    )
+                  })}
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
       </div>
     );
   };
 
-  const renderProductRow = (product: Product) => {
+  const OrderTable = () => {
+    const columns = React.useMemo(
+      () => [
+        {
+          Header: 'Order ID',
+          accessor: 'id',
+          Cell: ({ value }) => `#${value.substring(0, 8)}`,
+        },
+        {
+          Header: 'User',
+          accessor: (row) => row.user?.name || 'Guest',
+        },
+        {
+          Header: 'Date',
+          accessor: 'created_at',
+          Cell: ({ value }) => formatDate(value),
+        },
+        {
+          Header: 'Total',
+          accessor: 'total',
+          Cell: ({ value }) => formatCurrency(Number(value)),
+        },
+        {
+          Header: 'Status',
+          accessor: 'status',
+          Cell: ({ value }) => (
+            <Badge className={getStatusColor(value)}>
+              {value.toUpperCase()}
+            </Badge>
+          ),
+        },
+        {
+          Header: 'Actions',
+          Cell: ({ row }) => (
+            <Button variant="ghost" size="sm" onClick={() => viewOrderDetails(row.original)}>
+              View
+            </Button>
+          ),
+        },
+      ],
+      [getStatusColor, formatDate, viewOrderDetails]
+    );
+
+    const {
+      getTableProps,
+      getTableBodyProps,
+      headerGroups,
+      rows,
+      prepareRow,
+      state,
+      setGlobalFilter,
+    } = useTable(
+      {
+        columns,
+        data: orders || [],
+      },
+      useGlobalFilter,
+      useSortBy
+    );
+
     return (
-      <TableRow key={product.id}>
-        <TableCell>
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded overflow-hidden bg-gray-100">
-              {product.image ? (
-                <img 
-                  src={product.image} 
-                  alt={product.name} 
-                  className="h-full w-full object-cover" 
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <PackageIcon className="h-4 w-4 text-gray-400" />
-                </div>
-              )}
-            </div>
-            <div className="font-medium">{product.name}</div>
-          </div>
-        </TableCell>
-        <TableCell className="hidden md:table-cell">{product.category || 'Uncategorized'}</TableCell>
-        <TableCell className="text-right">₹{product.price.toFixed(2)}</TableCell>
-        <TableCell className="text-right hidden md:table-cell">{product.stock}</TableCell>
-        <TableCell className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontalIcon className="h-4 w-4" />
-                <span className="sr-only">Actions</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleEditProduct(product)}>
-                <PencilIcon className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleViewProduct(product.id)}>
-                <EyeIcon className="mr-2 h-4 w-4" />
-                View
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="text-destructive focus:text-destructive"
-                onClick={() => handleDeleteProduct(product.id)}
-              >
-                <TrashIcon className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </TableCell>
-      </TableRow>
+      <>
+        <GlobalFilter
+          preGlobalFilteredRows={orders}
+          globalFilter={state.globalFilter}
+          setGlobalFilter={setGlobalFilter}
+        />
+        <div className="overflow-x-auto">
+          <Table {...getTableProps()}>
+            <TableHeader>
+              {headerGroups.map(headerGroup => (
+                <TableRow {...headerGroup.getHeaderGroupProps()}>
+                  {headerGroup.headers.map(column => (
+                    <TableHead {...column.getHeaderProps(column.getSortByToggleProps())}>
+                      {column.render('Header')}
+                      <span>
+                        {column.isSorted
+                          ? column.isSortedDesc
+                            ? ' 🔽'
+                            : ' 🔼'
+                          : ''}
+                      </span>
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody {...getTableBodyProps()}>
+              {rows.map(row => {
+                prepareRow(row)
+                return (
+                  <TableRow {...row.getRowProps()}>
+                    {row.cells.map(cell => {
+                      return (
+                        <TableCell {...cell.getCellProps()}>
+                          {cell.render('Cell')}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </>
     );
   };
 
-  const handleViewOrder = (orderId: string) => {
-    const order = orders.find(o => o.id === orderId);
-    if (order) {
-      setViewingOrderId(orderId);
-      setSelectedOrderStatus(order.status);
-      setIsOrderDetailOpen(true);
-    }
-  };
+  function GlobalFilter({
+    preGlobalFilteredRows,
+    globalFilter,
+    setGlobalFilter,
+  }) {
+    const count = preGlobalFilteredRows.length
+    const [value, setValue] = React.useState(globalFilter)
+    const onChange = useAsyncDebounce(value => {
+      setGlobalFilter(value || undefined)
+    }, 200)
 
-  const handleStatusUpdate = async () => {
-    if (!viewingOrderId || !selectedOrderStatus) return;
-    
-    setIsUpdatingStatus(true);
-    try {
-      await updateOrderStatus(viewingOrderId, selectedOrderStatus);
-      toast.success('Order status updated successfully');
-    } catch (error) {
-      toast.error('Failed to update order status');
-    } finally {
-      setIsUpdatingStatus(false);
-    }
-  };
+    return (
+      <div className="mb-4">
+        <Input
+          value={value || ""}
+          onChange={e => {
+            setValue(e.target.value);
+            onChange(e.target.value);
+          }}
+          placeholder={`Search ${count} orders...`}
+          className="max-w-md"
+        />
+      </div>
+    )
+  }
+
+  if (!isAuthenticated || !user?.isAdmin) {
+    return null;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <div className="mb-8">
         <h1 className="text-3xl font-semibold tracking-tight">Admin Dashboard</h1>
         <p className="text-muted-foreground mt-1">
-          Manage products, orders, and users
+          Manage your store
         </p>
       </div>
 
-      <Tabs defaultValue={activeTab} className="space-y-4" onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="products" className="focus:outline-none">Products</TabsTrigger>
-          <TabsTrigger value="orders" className="focus:outline-none">Orders</TabsTrigger>
-          <TabsTrigger value="users" className="focus:outline-none">Users</TabsTrigger>
-          <TabsTrigger value="revenue" className="focus:outline-none">Revenue</TabsTrigger>
+      <Tabs defaultValue="dashboard" onValueChange={handleTabChange}>
+        <TabsList className="mb-8">
+          <TabsTrigger value="dashboard" className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4" />
+            Orders
+          </TabsTrigger>
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Users
+          </TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="products" className="space-y-4">
-          <Card>
-            <CardHeader className="flex items-center justify-between">
-              <CardTitle>Products</CardTitle>
-              <Button onClick={handleAddProduct}>Add Product</Button>
-            </CardHeader>
-            <CardContent>
-              {productsLoading ? (
-                <div className="flex justify-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-              ) : productsError ? (
-                <div className="text-center py-12">
-                  <h3 className="mt-4 text-lg font-medium">Error</h3>
-                  <p className="text-muted-foreground">{productsError}</p>
-                </div>
-              ) : products.length === 0 ? (
-                <div className="text-center py-12">
-                  <PackageIcon className="h-12 w-12 mx-auto text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">No products yet</h3>
-                  <p className="text-muted-foreground">
-                    Add new products to start selling.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={handleAddProduct}
-                  >
-                    Add Product
-                  </Button>
-                </div>
-              ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {products.map(renderProductCard)}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
+        <TabsContent value="dashboard" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Total Revenue
+                </CardTitle>
+                <CardDescription>
+                  All time revenue generated
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-2xl font-bold">
+                {revenue ? formatCurrency(revenue.total) : 'Loading...'}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  Today's Revenue
+                </CardTitle>
+                <CardDescription>
+                  Revenue generated today
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-2xl font-bold">
+                {revenue ? formatCurrency(revenue.today) : 'Loading...'}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                  <ClockIcon className="h-4 w-4" />
+                  Monthly Revenue
+                </CardTitle>
+                <CardDescription>
+                  Revenue generated this month
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-2xl font-bold">
+                {revenue ? formatCurrency(revenue.monthly) : 'Loading...'}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="orders" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Orders</CardTitle>
-              <CardDescription>Manage and view all orders</CardDescription>
+              <CardDescription>
+                Manage orders
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {ordersLoading ? (
-                <div className="flex justify-center py-12">
+                <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
               ) : ordersError ? (
-                <div className="text-center py-12">
-                  <h3 className="mt-4 text-lg font-medium">Error</h3>
-                  <p className="text-muted-foreground">{ordersError}</p>
-                </div>
-              ) : orders.length === 0 ? (
-                <div className="text-center py-12">
-                  <PackageIcon className="h-12 w-12 mx-auto text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">No orders yet</h3>
-                  <p className="text-muted-foreground">
-                    Orders will appear here when customers place them.
-                  </p>
-                </div>
+                <p className="text-red-500">Error: {ordersError}</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableCaption>All recent orders.</TableCaption>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead className="hidden md:table-cell">Date</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        <TableHead className="text-center">Status</TableHead>
-                        <TableHead className="text-right"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {orders.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell className="font-medium">
-                            #{order.id.substring(0, 8)}
-                          </TableCell>
-                          <TableCell>
-                            {order.user?.name || 'Unknown User'}
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            {new Date(order.created_at).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(Number(order.total))}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge 
-                              className={
-                                order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                                order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
-                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-800'
-                              }
-                            >
-                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleViewOrder(order.id)}
-                            >
-                              <EyeIcon className="h-4 w-4 mr-1" />
-                              View Details
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                <OrderTable />
               )}
             </CardContent>
           </Card>
@@ -494,527 +422,122 @@ const Admin: React.FC<AdminPageProps> = () => {
           <Card>
             <CardHeader>
               <CardTitle>Users</CardTitle>
-              <CardDescription>Manage and view all users</CardDescription>
+              <CardDescription>
+                Manage users
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {usersLoading ? (
-                <div className="flex justify-center py-12">
+                <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                 </div>
               ) : usersError ? (
-                <div className="text-center py-12">
-                  <h3 className="mt-4 text-lg font-medium">Error</h3>
-                  <p className="text-muted-foreground">{usersError}</p>
-                </div>
-              ) : users.length === 0 ? (
-                <div className="text-center py-12">
-                  <PackageIcon className="h-12 w-12 mx-auto text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">No users yet</h3>
-                  <p className="text-muted-foreground">
-                    New users will appear here when they register.
-                  </p>
-                </div>
+                <p className="text-red-500">Error: {usersError}</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableCaption>All registered users.</TableCaption>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead className="hidden md:table-cell">Email</TableHead>
-                        <TableHead className="text-right hidden md:table-cell">Orders</TableHead>
-                        <TableHead className="text-right"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell>{user.name || 'N/A'}</TableCell>
-                          <TableCell className="hidden md:table-cell">
-                            {user.email || 'N/A'}
-                          </TableCell>
-                          <TableCell className="text-right hidden md:table-cell">{user.orderCount}</TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontalIcon className="h-4 w-4" />
-                                  <span className="sr-only">Actions</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive focus:text-destructive">
-                                  Delete User
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                <UserTable />
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="revenue" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue</CardTitle>
-              <CardDescription>Overview of revenue statistics</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Total Revenue</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(revenue.total)}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Revenue Today</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(revenue.today)}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Revenue This Month</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(revenue.monthly)}</div>
-                  </CardContent>
-                </Card>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add New Product</DialogTitle>
-            <DialogDescription>
-              Create a new product to sell in the store.
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...productForm}>
-            <form onSubmit={productForm.handleSubmit(onSubmitProduct)} className="space-y-4">
-              <FormField
-                control={productForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Product Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={productForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Product Description" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={productForm.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={productForm.control}
-                  name="stock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Stock</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="0" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      {selectedOrder && (
+        <Dialog open={isOrderDialogOpen} onOpenChange={setIsOrderDialogOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>
+                Order Details #{selectedOrder.id.substring(0, 8)}
+              </DialogTitle>
+              <DialogDescription>
+                View and manage order information.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {/* Order details content */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-medium">Customer Information</h3>
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-muted-foreground">Name:</span>
+                    <p>{selectedOrder.user?.name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Email:</span>
+                    <p>{selectedOrder.user?.email || 'N/A'}</p>
+                  </div>
+                </div>
+                <Separator className="my-4" />
+                <h3 className="text-lg font-medium">Shipping Address</h3>
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-muted-foreground">Address:</span>
+                    <p>{selectedOrder.street}, {selectedOrder.city}</p>
+                    <p>{selectedOrder.state}, {selectedOrder.zip_code} {selectedOrder.country}</p>
+                  </div>
+                </div>
+                <Separator className="my-4" />
+                <h3 className="text-lg font-medium">Payment Information</h3>
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-muted-foreground">Payment Method:</span>
+                    <p>{selectedOrder.payment_method}</p>
+                  </div>
+                </div>
               </div>
-              <FormField
-                control={productForm.control}
-                name="image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Image URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Image URL" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={productForm.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Category" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={productForm.control}
-                  name="unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Unit</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Unit" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={productForm.control}
-                name="organic"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Organic</FormLabel>
-                      <FormDescription>
-                        This product is certified organic.
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="submit">Add Product</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isProductEditOpen} onOpenChange={setIsProductEditOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
-            <DialogDescription>
-              Edit the details of the selected product.
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...productForm}>
-            <form onSubmit={productForm.handleSubmit(onSubmitProduct)} className="space-y-4">
-              <FormField
-                control={productForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Product Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={productForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Product Description" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={productForm.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={productForm.control}
-                  name="stock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Stock</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="0" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={productForm.control}
-                name="image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Image URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Image URL" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={productForm.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Category" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={productForm.control}
-                  name="unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Unit</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Unit" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={productForm.control}
-                name="organic"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Organic</FormLabel>
-                      <FormDescription>
-                        This product is certified organic.
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="submit">Update Product</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isDeleteConfirmationOpen} onOpenChange={setIsDeleteConfirmationOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this product? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="secondary" onClick={cancelDeleteProduct}>
-              Cancel
-            </Button>
-            <Button type="button" variant="destructive" onClick={confirmDeleteProduct}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isOrderDetailOpen} onOpenChange={setIsOrderDetailOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Order Details</DialogTitle>
-            <DialogDescription>
-              View and manage order information.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {viewingOrderId && (
-            <div className="space-y-6">
-              {(() => {
-                const order = orders.find(o => o.id === viewingOrderId);
-                if (!order) return <p>Order not found</p>;
-                
-                return (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-medium">Order Items</h3>
+                <div className="space-y-2">
+                  {selectedOrder.items && selectedOrder.items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-4">
+                      <div className="h-16 w-16 rounded-md overflow-hidden">
+                        {item.products?.image ? (
+                          <img
+                            src={item.products.image}
+                            alt={item.products.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-muted">
+                            <PackageIcon className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
                       <div>
-                        <h3 className="font-medium text-sm text-muted-foreground mb-2">Order Information</h3>
-                        <div className="space-y-1">
-                          <p><span className="font-medium">Order ID:</span> #{order.id.substring(0, 8)}</p>
-                          <p><span className="font-medium">Date:</span> {new Date(order.created_at).toLocaleString()}</p>
-                          <p><span className="font-medium">Status:</span> {order.status}</p>
-                          <p><span className="font-medium">Total:</span> {formatCurrency(Number(order.total))}</p>
-                          <p><span className="font-medium">Payment Method:</span> {order.payment_method === 'cod' ? 'Cash on Delivery' : order.payment_method}</p>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h3 className="font-medium text-sm text-muted-foreground mb-2">Customer Information</h3>
-                        <div className="space-y-1">
-                          <p><span className="font-medium">Name:</span> {order.user?.name || 'Unknown'}</p>
-                          <p><span className="font-medium">Email:</span> {order.user?.email || 'N/A'}</p>
-                          <p><span className="font-medium">Address:</span> {order.street}</p>
-                          <p><span className="font-medium">City:</span> {order.city}, {order.state} {order.zip_code}</p>
-                          <p><span className="font-medium">Country:</span> {order.country}</p>
-                        </div>
+                        <p className="font-medium">{item.products?.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {item.quantity} x {formatCurrency(Number(item.price))}
+                        </p>
                       </div>
                     </div>
-                    
-                    <div>
-                      <h3 className="font-medium text-sm text-muted-foreground mb-2">Order Items</h3>
-                      <div className="border rounded-md">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Product</TableHead>
-                              <TableHead className="text-right">Price</TableHead>
-                              <TableHead className="text-right">Quantity</TableHead>
-                              <TableHead className="text-right">Total</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {order.items && order.items.map((item) => (
-                              <TableRow key={item.id}>
-                                <TableCell className="font-medium">
-                                  <div className="flex items-center">
-                                    <div className="h-10 w-10 bg-muted rounded-md overflow-hidden flex-shrink-0 mr-3">
-                                      {item.products?.image ? (
-                                        <img 
-                                          src={item.products.image} 
-                                          alt={item.products.name} 
-                                          className="h-full w-full object-cover"
-                                        />
-                                      ) : (
-                                        <div className="h-full w-full flex items-center justify-center bg-muted">
-                                          <PackageIcon className="h-4 w-4 text-muted-foreground" />
-                                        </div>
-                                      )}
-                                    </div>
-                                    {item.products?.name || 'Unknown Product'}
-                                  </div>
-                                </TableCell>
-                                <TableCell className="text-right">{formatCurrency(Number(item.price))}</TableCell>
-                                <TableCell className="text-right">{item.quantity}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(Number(item.price) * item.quantity)}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="font-medium text-sm text-muted-foreground mb-2">Update Status</h3>
-                      <div className="flex items-center space-x-2">
-                        <Select 
-                          value={selectedOrderStatus} 
-                          onValueChange={setSelectedOrderStatus}
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="processing">Processing</SelectItem>
-                            <SelectItem value="shipped">Shipped</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button 
-                          onClick={handleStatusUpdate} 
-                          disabled={isUpdatingStatus || selectedOrderStatus === order.status}
-                        >
-                          {isUpdatingStatus ? (
-                            <div className="flex items-center">
-                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              Updating...
-                            </div>
-                          ) : (
-                            'Update Status'
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
+                  ))}
+                </div>
+                <Separator className="my-4" />
+                <div className="flex justify-between font-medium">
+                  <span>Total:</span>
+                  <span>{formatCurrency(Number(selectedOrder.total))}</span>
+                </div>
+              </div>
+              
+              {/* Update this part to show the admin version of order actions */}
+              <div className="md:col-span-2 mt-4">
+                <h3 className="font-medium mb-2">Update Status</h3>
+                <OrderActions
+                  orderId={selectedOrder.id}
+                  orderStatus={selectedOrder.status}
+                  onStatusChange={() => {
+                    // Refetch orders after status update
+                    fetchOrders();
+                    // Optionally close the dialog
+                    // setIsOrderDialogOpen(false);
+                  }}
+                  isAdminView={true}
+                />
+              </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

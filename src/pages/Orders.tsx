@@ -75,6 +75,8 @@ const Orders = () => {
         return 'bg-blue-100 text-blue-800';
       case 'shipped':
         return 'bg-purple-100 text-purple-800';
+      case 'delivered':
+        return 'bg-teal-100 text-teal-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       default:
@@ -190,6 +192,7 @@ const Orders = () => {
                             orderId={order.id}
                             orderStatus={order.status}
                             onStatusChange={refetchOrders}
+                            isAdminView={false}
                           />
                         </div>
                       </div>
