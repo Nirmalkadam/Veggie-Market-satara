@@ -71,13 +71,10 @@ const OrderActions = ({ orderId, orderStatus, onStatusChange }: OrderActionsProp
         throw new Error('Invalid order ID');
       }
       
-      const { error, data } = await supabase
+      const { error } = await supabase
         .from('orders')
         .update({ status: 'cancelled' })
-        .eq('id', orderId)
-        .select();
-      
-      console.log("Update response:", { error, data });
+        .eq('id', orderId);
       
       if (error) {
         throw error;
@@ -85,7 +82,7 @@ const OrderActions = ({ orderId, orderStatus, onStatusChange }: OrderActionsProp
       
       toast.success('Order has been cancelled');
       onStatusChange();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cancelling order:', error);
       toast.error('Failed to cancel order: ' + (error.message || 'Unknown error'));
     } finally {
@@ -114,7 +111,7 @@ const OrderActions = ({ orderId, orderStatus, onStatusChange }: OrderActionsProp
       
       toast.success(`Order status updated to ${newStatus}`);
       onStatusChange();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating order status:', error);
       toast.error('Failed to update status: ' + (error.message || 'Unknown error'));
     } finally {
@@ -154,8 +151,8 @@ const OrderActions = ({ orderId, orderStatus, onStatusChange }: OrderActionsProp
           <div className="flex items-center">
             <Select
               disabled={isUpdating}
-              onValueChange={handleUpdateStatus}
               defaultValue={orderStatus}
+              onValueChange={handleUpdateStatus}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Update status" />
