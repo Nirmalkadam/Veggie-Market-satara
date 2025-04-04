@@ -67,8 +67,25 @@ const Products = () => {
     return matchesSearch && matchesCategory && matchesOrganic;
   });
 
-  const handleAddSampleProducts = () => {
-    navigate('/seed-products');
+  const handleAddSampleProducts = async () => {
+    try {
+      setLoading(true);
+      const result = await seedProducts();
+      toast.success(`Added ${result.length} sample products successfully!`);
+      
+      // Refresh products list
+      const { data, error } = await supabase
+        .from('products')
+        .select('*');
+        
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error('Error adding sample products:', error);
+      toast.error('Failed to add sample products');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -137,6 +154,13 @@ const Products = () => {
                 Organic Only
               </label>
             </div>
+          </div>
+
+          {/* "Add More Products" button at the top */}
+          <div className="mb-6 flex justify-end">
+            <Button onClick={handleAddSampleProducts} variant="outline">
+              Add More Sample Products
+            </Button>
           </div>
 
           {/* Product Grid */}

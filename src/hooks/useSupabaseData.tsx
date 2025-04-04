@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -38,6 +39,7 @@ export const useProducts = () => {
     try {
       console.log('Adding product to database:', product);
       
+      // Accept strings from the form and convert to numbers here
       const productToAdd = {
         ...product,
         price: Number(product.price),
@@ -71,6 +73,7 @@ export const useProducts = () => {
 
   const updateProduct = useCallback(async (id: string, updates: Partial<Product>) => {
     try {
+      // Make sure price and stock are converted to numbers
       const updatesToApply = {
         ...updates,
         price: updates.price !== undefined ? Number(updates.price) : undefined,

@@ -100,10 +100,17 @@ const OrderActions = ({ orderId, orderStatus, onStatusChange }: OrderActionsProp
         throw new Error('Invalid order ID');
       }
       
-      const { error } = await supabase
+      // Log more details for debugging
+      console.log('Order ID:', orderId);
+      console.log('New status:', newStatus);
+      
+      const { data, error } = await supabase
         .from('orders')
         .update({ status: newStatus })
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .select();
+      
+      console.log('Update response:', { data, error });
       
       if (error) {
         throw error;
