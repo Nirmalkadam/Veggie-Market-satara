@@ -118,7 +118,9 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
         category: "greens",
         stock: 40,
         unit: "package",
-        organic: true
+        organic: true,
+        created_at: null,
+        updated_at: null
       },
       {
         id: generateDeterministicUUID("prod14"),
@@ -128,7 +130,10 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
         image: "https://images.unsplash.com/photo-1618512496248-a3e6c284edaa?q=80&w=1000&auto=format&fit=crop",
         category: "vegetables",
         stock: 50,
-        unit: "each"
+        unit: "each",
+        organic: false,
+        created_at: null,
+        updated_at: null
       },
       {
         id: generateDeterministicUUID("prod15"),
@@ -138,7 +143,10 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
         image: "https://images.unsplash.com/photo-1603431777007-fcacc9d41f64?q=80&w=1000&auto=format&fit=crop",
         category: "roots",
         stock: 30,
-        unit: "piece"
+        unit: "piece",
+        organic: false,
+        created_at: null,
+        updated_at: null
       },
       {
         id: generateDeterministicUUID("prod16"),
@@ -149,7 +157,9 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
         category: "fruits",
         stock: 35,
         unit: "pack",
-        organic: true
+        organic: true,
+        created_at: null,
+        updated_at: null
       },
       {
         id: generateDeterministicUUID("prod17"),
@@ -159,7 +169,10 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
         image: "https://images.unsplash.com/photo-1600689042427-b13ef4e29d79?q=80&w=1000&auto=format&fit=crop",
         category: "herbs",
         stock: 25,
-        unit: "bunch"
+        unit: "bunch",
+        organic: false,
+        created_at: null,
+        updated_at: null
       },
       {
         id: generateDeterministicUUID("prod18"),
@@ -169,7 +182,10 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
         image: "https://images.unsplash.com/photo-1563566925391-3a396a9a0d77?q=80&w=1000&auto=format&fit=crop",
         category: "vegetables",
         stock: 30,
-        unit: "pound"
+        unit: "pound",
+        organic: false,
+        created_at: null,
+        updated_at: null
       },
       {
         id: generateDeterministicUUID("prod19"),
@@ -180,7 +196,9 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
         category: "fruits",
         stock: 20,
         unit: "pint",
-        organic: true
+        organic: true,
+        created_at: null,
+        updated_at: null
       },
       {
         id: generateDeterministicUUID("prod20"),
@@ -190,7 +208,10 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
         image: "https://images.unsplash.com/photo-1628468615047-c70ef9e36fca?q=80&w=1000&auto=format&fit=crop",
         category: "herbs",
         stock: 30,
-        unit: "bunch"
+        unit: "bunch",
+        organic: false,
+        created_at: null,
+        updated_at: null
       }
     ];
     

@@ -80,7 +80,7 @@ const Products = () => {
         
       if (error) throw error;
       setProducts(data || []);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding sample products:', error);
       toast.error('Failed to add sample products');
     } finally {
