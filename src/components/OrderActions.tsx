@@ -104,16 +104,23 @@ const OrderActions = ({ orderId, orderStatus, onStatusChange }: OrderActionsProp
       console.log('Order ID:', orderId);
       console.log('New status:', newStatus);
       
-      const { data, error } = await supabase
+      // Make sure we're using the correct type for the status column
+      if (typeof newStatus !== 'string') {
+        throw new Error('Invalid status value type');
+      }
+      
+      // Make the update request with explicit type safety
+      const updateResponse = await supabase
         .from('orders')
         .update({ status: newStatus })
         .eq('id', orderId)
         .select();
       
-      console.log('Update response:', { data, error });
+      console.log('Update response:', updateResponse);
       
-      if (error) {
-        throw error;
+      if (updateResponse.error) {
+        console.error('Supabase error:', updateResponse.error);
+        throw updateResponse.error;
       }
       
       toast.success(`Order status updated to ${newStatus}`);

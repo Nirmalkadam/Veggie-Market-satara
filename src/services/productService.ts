@@ -4,9 +4,11 @@ import { Product } from '@/types';
 import { toast } from 'sonner';
 
 // Add products to the database
-export const addProductsToDatabase = async (products: Product[]): Promise<void> => {
+export const addProductsToDatabase = async (products: Product[]): Promise<Product[]> => {
   try {
     console.log("Adding products to database:", products);
+    
+    const addedProducts: Product[] = [];
     
     // Process each product
     for (const product of products) {
@@ -49,12 +51,17 @@ export const addProductsToDatabase = async (products: Product[]): Promise<void> 
           console.error(`Error adding product ${product.name}:`, error);
           throw error;
         }
+        
+        if (data && data.length > 0) {
+          addedProducts.push(data[0] as Product);
+        }
       } else {
         console.log(`Product ${product.name} already exists, skipping`);
       }
     }
     
     toast.success('Products added to database successfully');
+    return addedProducts;
   } catch (error) {
     console.error('Error adding products to database:', error);
     toast.error('Failed to add products to database: ' + error.message);
@@ -92,12 +99,105 @@ export const getProductById = async (productId: string): Promise<Product | null>
 };
 
 // Seed the database with products
-export const seedProducts = async (products: Product[]): Promise<void> => {
+export const seedProducts = async (customProducts?: Product[]): Promise<Product[]> => {
   try {
-    console.log("Seeding database with products:", products);
-    await addProductsToDatabase(products);
-    console.log('Database seeded with products');
+    // If custom products are provided, use them, otherwise use default products
+    if (customProducts && customProducts.length > 0) {
+      console.log("Seeding database with custom products:", customProducts);
+      return await addProductsToDatabase(customProducts);
+    }
+    
+    // Default set of additional products to seed
+    const additionalProducts: Product[] = [
+      {
+        id: generateDeterministicUUID("prod13"),
+        name: "Organic Baby Spinach",
+        description: "Tender baby spinach leaves, perfect for salads and smoothies. Our organic baby spinach is grown without synthetic pesticides and harvested at its nutritional peak.",
+        price: 3.49,
+        image: "https://images.unsplash.com/photo-1580910365329-81b5cbf74775?q=80&w=1000&auto=format&fit=crop",
+        category: "greens",
+        stock: 40,
+        unit: "package",
+        organic: true
+      },
+      {
+        id: generateDeterministicUUID("prod14"),
+        name: "Red Onions",
+        description: "Sweet and colorful red onions. Red onions have a milder, sweeter flavor than yellow onions and add beautiful color to salads, sandwiches, and salsas when used raw. When cooked, they add depth and subtle sweetness to many dishes.",
+        price: 1.29,
+        image: "https://images.unsplash.com/photo-1618512496248-a3e6c284edaa?q=80&w=1000&auto=format&fit=crop",
+        category: "vegetables",
+        stock: 50,
+        unit: "each"
+      },
+      {
+        id: generateDeterministicUUID("prod15"),
+        name: "Fresh Ginger Root",
+        description: "Aromatic and zesty ginger root. Fresh ginger adds a warm, spicy kick to stir-fries, curries, and teas. It's valued not only for its distinctive flavor but also for its digestive and anti-inflammatory properties.",
+        price: 2.99,
+        image: "https://images.unsplash.com/photo-1603431777007-fcacc9d41f64?q=80&w=1000&auto=format&fit=crop",
+        category: "roots",
+        stock: 30,
+        unit: "piece"
+      },
+      {
+        id: generateDeterministicUUID("prod16"),
+        name: "Organic Kiwi Fruit",
+        description: "Sweet and tangy organic kiwi fruits. Kiwis are packed with vitamin C, fiber, and antioxidants. Their bright green flesh and tiny black seeds provide a refreshing burst of flavor that's both sweet and slightly tart.",
+        price: 4.99,
+        image: "https://images.unsplash.com/photo-1618897996318-5a901fa6ca71?q=80&w=1000&auto=format&fit=crop",
+        category: "fruits",
+        stock: 35,
+        unit: "pack",
+        organic: true
+      },
+      {
+        id: generateDeterministicUUID("prod17"),
+        name: "Fresh Basil",
+        description: "Aromatic fresh basil leaves. Basil is the star of Italian cuisine, adding its distinctive aroma and flavor to pastas, pizzas, and salads. Our fresh basil bunches are carefully grown and harvested to ensure maximum flavor.",
+        price: 2.49,
+        image: "https://images.unsplash.com/photo-1600689042427-b13ef4e29d79?q=80&w=1000&auto=format&fit=crop",
+        category: "herbs",
+        stock: 25,
+        unit: "bunch"
+      },
+      {
+        id: generateDeterministicUUID("prod18"),
+        name: "Sweet Peas",
+        description: "Tender, sweet garden peas. Sweet peas are nature's perfect snack—sweet, nutritious, and satisfying. They're delicious raw as a snack, lightly steamed as a side dish, or added to stir-fries, soups, and pastas.",
+        price: 3.29,
+        image: "https://images.unsplash.com/photo-1563566925391-3a396a9a0d77?q=80&w=1000&auto=format&fit=crop",
+        category: "vegetables",
+        stock: 30,
+        unit: "pound"
+      },
+      {
+        id: generateDeterministicUUID("prod19"),
+        name: "Organic Blueberries",
+        description: "Plump, juicy organic blueberries. Our organic blueberries are grown without synthetic pesticides, resulting in berries that are both better for you and the environment. They're perfect for snacking, baking, or adding to your morning oatmeal.",
+        price: 5.99,
+        image: "https://images.unsplash.com/photo-1498557850523-fd3d118b962e?q=80&w=1000&auto=format&fit=crop",
+        category: "fruits",
+        stock: 20,
+        unit: "pint",
+        organic: true
+      },
+      {
+        id: generateDeterministicUUID("prod20"),
+        name: "Fresh Mint",
+        description: "Refreshing and aromatic mint leaves. Mint adds a refreshing finish to desserts, beverages, and savory dishes alike. It's perfect for making teas, mojitos, and adding to Mediterranean and Middle Eastern cuisine.",
+        price: 1.99,
+        image: "https://images.unsplash.com/photo-1628468615047-c70ef9e36fca?q=80&w=1000&auto=format&fit=crop",
+        category: "herbs",
+        stock: 30,
+        unit: "bunch"
+      }
+    ];
+    
+    console.log("Seeding database with additional products");
+    return await addProductsToDatabase(additionalProducts);
   } catch (error) {
     console.error('Error seeding database:', error);
+    return [];
   }
 };

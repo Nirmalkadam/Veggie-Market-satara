@@ -70,8 +70,8 @@ const Products = () => {
   const handleAddSampleProducts = async () => {
     try {
       setLoading(true);
-      const result = await seedProducts();
-      toast.success(`Added ${result.length} sample products successfully!`);
+      const addedProducts = await seedProducts();
+      toast.success(`Added ${addedProducts.length} sample products successfully!`);
       
       // Refresh products list
       const { data, error } = await supabase
@@ -80,7 +80,7 @@ const Products = () => {
         
       if (error) throw error;
       setProducts(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding sample products:', error);
       toast.error('Failed to add sample products');
     } finally {
