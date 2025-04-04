@@ -107,7 +107,76 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
       return await addProductsToDatabase(customProducts);
     }
     
-    // Default set of additional products to seed
+    // Products from the Supabase table image
+    const supabaseProducts: Product[] = [
+      {
+        id: "4e3eba56-bb99-4f6c-9dd3-cb59df583e4",
+        name: "Fresho! Strawberry, 200 g",
+        description: "About the Product Strawberries are juicy",
+        price: 80.00,
+        image: "https://www.bbassets.com/media/upload",
+        category: "fruits",
+        stock: 25,
+        unit: "pack",
+        organic: false,
+        created_at: null,
+        updated_at: null
+      },
+      {
+        id: "7722c4d5-cd6b-4771-9c43-b86b26d4a5c",
+        name: "Fresh Carrots",
+        description: "Sweet and crunchy organic carrots, perfect",
+        price: 69.99,
+        image: "https://images.unsplash.com/photo-1582394142869",
+        category: "roots",
+        stock: 40,
+        unit: "bunch",
+        organic: true,
+        created_at: null,
+        updated_at: null
+      },
+      {
+        id: "8006d141-f0af-4df3-bcf7-5935c9b013ff",
+        name: "Bell Peppers Mix",
+        description: "Colorful mix of fresh bell peppers",
+        price: 149.99,
+        image: "https://images.unsplash.com/photo-1563699500462",
+        category: "vegetables",
+        stock: 30,
+        unit: "pack",
+        organic: false,
+        created_at: null,
+        updated_at: null
+      },
+      {
+        id: "9e4dc5e2-2d0d-474b-9f49-f8e334499f0c",
+        name: "Organic Broccoli",
+        description: "Fresh organic broccoli, locally grown",
+        price: 129.99,
+        image: "https://images.unsplash.com/photo-1584270354949",
+        category: "vegetables",
+        stock: 35,
+        unit: "head",
+        organic: true,
+        created_at: null,
+        updated_at: null
+      },
+      {
+        id: "9ed2ac9b-b38a-4eb4-90be-355193f3fb1f",
+        name: "Sweet Corn",
+        description: "Also known as Maize, Sweet Corn is a cereal",
+        price: 16.99,
+        image: "https://www.jiomart.com/images/product",
+        category: "vegetables",
+        stock: 50,
+        unit: "piece",
+        organic: false,
+        created_at: null,
+        updated_at: null
+      }
+    ];
+    
+    // Add previous additional products as a fallback
     const additionalProducts: Product[] = [
       {
         id: generateDeterministicUUID("prod13"),
@@ -215,8 +284,17 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
       }
     ];
     
-    console.log("Seeding database with additional products");
-    return await addProductsToDatabase(additionalProducts);
+    console.log("Seeding database with Supabase products");
+    const addedProducts = await addProductsToDatabase(supabaseProducts);
+    
+    // If no products were added (which means they all already exist), 
+    // try adding the additional products
+    if (addedProducts.length === 0) {
+      console.log("No new Supabase products added, trying additional products");
+      return await addProductsToDatabase(additionalProducts);
+    }
+    
+    return addedProducts;
   } catch (error) {
     console.error('Error seeding database:', error);
     return [];

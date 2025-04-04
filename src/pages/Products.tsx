@@ -104,10 +104,10 @@ const Products = () => {
         <div className="text-center py-16">
           <h2 className="text-xl font-medium mb-4">No Products Found</h2>
           <p className="text-muted-foreground mb-6">
-            No products found in the database. Click below to add some sample products.
+            No products found in the database. Click below to add some products.
           </p>
           <Button onClick={handleAddSampleProducts}>
-            Add Sample Products
+            Add Supabase Products
           </Button>
         </div>
       ) : (
@@ -159,7 +159,7 @@ const Products = () => {
           {/* "Add More Products" button at the top */}
           <div className="mb-6 flex justify-end">
             <Button onClick={handleAddSampleProducts} variant="outline">
-              Add More Sample Products
+              Add More Products
             </Button>
           </div>
 
