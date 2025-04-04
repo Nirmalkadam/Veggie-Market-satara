@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -39,9 +38,15 @@ export const useProducts = () => {
     try {
       console.log('Adding product to database:', product);
       
+      const productToAdd = {
+        ...product,
+        price: Number(product.price),
+        stock: Number(product.stock)
+      };
+      
       const { data, error } = await supabase
         .from('products')
-        .insert([product])
+        .insert([productToAdd])
         .select()
         .single();
 
@@ -66,9 +71,15 @@ export const useProducts = () => {
 
   const updateProduct = useCallback(async (id: string, updates: Partial<Product>) => {
     try {
+      const updatesToApply = {
+        ...updates,
+        price: updates.price !== undefined ? Number(updates.price) : undefined,
+        stock: updates.stock !== undefined ? Number(updates.stock) : undefined
+      };
+      
       const { data, error } = await supabase
         .from('products')
-        .update(updates)
+        .update(updatesToApply)
         .eq('id', id)
         .select()
         .single();

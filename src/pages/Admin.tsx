@@ -92,8 +92,8 @@ const Admin: React.FC<AdminPageProps> = () => {
   const productSchema = z.object({
     name: z.string().min(2, { message: 'Product name is required' }),
     description: z.string().optional(),
-    price: z.number().min(0, { message: 'Price must be a positive number' }),
-    stock: z.number().min(0, { message: 'Stock must be a positive number' }),
+    price: z.coerce.number().min(0, { message: 'Price must be a positive number' }),
+    stock: z.coerce.number().min(0, { message: 'Stock must be a positive number' }),
     image: z.string().optional(),
     category: z.string().optional(),
     organic: z.boolean().optional(),
@@ -184,8 +184,8 @@ const Admin: React.FC<AdminPageProps> = () => {
       const productData = {
         name: data.name,
         description: data.description || '',
-        price: data.price,
-        stock: data.stock,
+        price: Number(data.price),
+        stock: Number(data.stock),
         image: data.image || '',
         category: data.category || '',
         organic: data.organic || false,
@@ -197,6 +197,7 @@ const Admin: React.FC<AdminPageProps> = () => {
         toast.success('Product updated successfully!');
         setIsProductEditOpen(false);
       } else {
+        console.log("Adding new product:", productData);
         const result = await addProduct(productData);
         console.log("Product added result:", result);
         toast.success('Product added successfully!');
