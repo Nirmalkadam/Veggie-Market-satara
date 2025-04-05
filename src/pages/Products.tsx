@@ -9,51 +9,15 @@ import { createMockProduct } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { seedProducts } from '@/services/productService';
+import { useProducts } from '@/hooks/useSupabaseData';
 
 const Products = () => {
   const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { products, loading: productsLoading, error, fetchProducts } = useProducts();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [organicOnly, setOrganicOnly] = useState(false);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        console.log("Fetching products from Supabase...");
-        
-        const { data, error } = await supabase
-          .from('products')
-          .select('*');
-        
-        if (error) {
-          throw error;
-        }
-        
-        console.log("Fetched products:", data);
-        
-        if (data && data.length > 0) {
-          setProducts(data);
-        } else {
-          console.log("No products found in database");
-          setProducts([]);
-        }
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        toast.error('Failed to load products: ' + error.message);
-        setError(error.message);
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchProducts();
-  }, []);
 
   const filteredProducts = products.filter(product => {
     // Convert to lowercase for case-insensitive search
@@ -69,26 +33,19 @@ const Products = () => {
 
   const handleAddSampleProducts = async () => {
     try {
-      setLoading(true);
+      toast.loading('Adding sample products...');
       const addedProducts = await seedProducts();
       toast.success(`Added ${addedProducts.length} sample products successfully!`);
       
       // Refresh products list
-      const { data, error } = await supabase
-        .from('products')
-        .select('*');
-        
-      if (error) throw error;
-      setProducts(data || []);
+      await fetchProducts();
     } catch (error) {
       console.error('Error adding sample products:', error);
       toast.error('Failed to add sample products');
-    } finally {
-      setLoading(false);
     }
   };
 
-  if (loading) {
+  if (productsLoading) {
     return (
       <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

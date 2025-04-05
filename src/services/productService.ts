@@ -1,4 +1,3 @@
-
 import { supabase, validateUUID, generateDeterministicUUID, sanitizeProductId } from '@/integrations/supabase/client';
 import { Product } from '@/types';
 import { toast } from 'sonner';
@@ -107,8 +106,23 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
       return await addProductsToDatabase(customProducts);
     }
     
-    // Products from the Supabase table image
+    // Products from the Supabase table image and additional products
     const supabaseProducts: Product[] = [
+      // Product from the image
+      {
+        id: "c5d7a4fd-1b2e-4db1-badb-33dfe0add36",
+        name: "Onion 1 kg",
+        description: "The beauty of an Onion is that it can go just about anywhere a savory dish is found",
+        price: 28.00,
+        image: "https://www.jiomart.com/images/product/original/590003515/onion-1-kg-product-images-o590003515-p590003515-0-202203170515.jpg",
+        category: "vegetables",
+        stock: 50,
+        unit: "kg",
+        organic: false,
+        created_at: null,
+        updated_at: null
+      },
+      // Keep existing products
       {
         id: "4e3eba56-bb99-4f6c-9dd3-cb59df583e4",
         name: "Fresho! Strawberry, 200 g",
