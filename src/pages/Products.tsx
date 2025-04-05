@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProductCard from '@/components/ProductCard';
-import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { createMockProduct } from '@/types';
@@ -115,13 +114,6 @@ const Products = () => {
                 Organic Only
               </label>
             </div>
-          </div>
-
-          {/* "Add More Products" button at the top */}
-          <div className="mb-6 flex justify-end">
-            <Button onClick={handleAddProducts} variant="outline">
-              Add More Products
-            </Button>
           </div>
 
           {/* Product Grid */}
