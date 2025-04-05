@@ -106,9 +106,9 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
       return await addProductsToDatabase(customProducts);
     }
     
-    // Products from the Supabase table image and additional products
+    // Products from the Supabase table image and additional new products
     const supabaseProducts: Product[] = [
-      // Product from the image
+      // Previously added product
       {
         id: "c5d7a4fd-1b2e-4db1-badb-33dfe0add36",
         name: "Onion 1 kg",
@@ -122,7 +122,73 @@ export const seedProducts = async (customProducts?: Product[]): Promise<Product[
         created_at: null,
         updated_at: null
       },
-      // Keep existing products
+      
+      // New products to add to the table
+      {
+        id: generateDeterministicUUID("tomatoes_product"),
+        name: "Fresh Tomatoes - 1 kg",
+        description: "Juicy, ripe tomatoes perfect for salads, sauces, and sandwiches. Our fresh tomatoes are carefully selected for optimal flavor and ripeness.",
+        price: 35.99,
+        image: "https://images.unsplash.com/photo-1592924357229-3cd694c4d025?q=80&w=1000&auto=format&fit=crop",
+        category: "vegetables",
+        stock: 45,
+        unit: "kg",
+        organic: true,
+        created_at: null,
+        updated_at: null
+      },
+      {
+        id: generateDeterministicUUID("apples_product"),
+        name: "Red Apples - 500g",
+        description: "Sweet and crunchy red apples. Rich in antioxidants and dietary fiber, these apples make for a healthy snack or a perfect ingredient for pies and desserts.",
+        price: 42.50,
+        image: "https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?q=80&w=1000&auto=format&fit=crop",
+        category: "fruits",
+        stock: 60,
+        unit: "pack",
+        organic: false,
+        created_at: null,
+        updated_at: null
+      },
+      {
+        id: generateDeterministicUUID("potatoes_product"),
+        name: "Russet Potatoes - 2 kg",
+        description: "Versatile russet potatoes, ideal for baking, mashing, or frying. These potatoes have a fluffy texture when cooked and are perfect for various culinary applications.",
+        price: 32.99,
+        image: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?q=80&w=1000&auto=format&fit=crop",
+        category: "roots",
+        stock: 40,
+        unit: "bag",
+        organic: false,
+        created_at: null,
+        updated_at: null
+      },
+      {
+        id: generateDeterministicUUID("cilantro_product"),
+        name: "Fresh Cilantro Bunch",
+        description: "Aromatic cilantro (coriander) leaves with a distinctive flavor perfect for garnishing and seasoning dishes. Adds freshness to Mexican, Indian, and Thai cuisines.",
+        price: 18.50,
+        image: "https://images.unsplash.com/photo-1615485500664-8f3c23744796?q=80&w=1000&auto=format&fit=crop",
+        category: "herbs",
+        stock: 30,
+        unit: "bunch",
+        organic: true,
+        created_at: null,
+        updated_at: null
+      },
+      {
+        id: generateDeterministicUUID("cucumber_product"),
+        name: "Cucumber - 3 pieces",
+        description: "Cool and refreshing cucumbers with a crisp texture. Perfect for salads, sandwiches, or making refreshing summer drinks and tzatziki sauce.",
+        price: 25.75,
+        image: "https://images.unsplash.com/photo-1604977042946-1eecc30f269e?q=80&w=1000&auto=format&fit=crop",
+        category: "vegetables",
+        stock: 50,
+        unit: "pack",
+        organic: false,
+        created_at: null,
+        updated_at: null
+      },
       {
         id: "4e3eba56-bb99-4f6c-9dd3-cb59df583e4",
         name: "Fresho! Strawberry, 200 g",

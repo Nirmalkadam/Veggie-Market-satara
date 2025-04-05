@@ -33,15 +33,15 @@ const Products = () => {
 
   const handleAddSampleProducts = async () => {
     try {
-      toast.loading('Adding sample products...');
+      toast.loading('Adding new products to database...');
       const addedProducts = await seedProducts();
-      toast.success(`Added ${addedProducts.length} sample products successfully!`);
+      toast.success(`Added ${addedProducts.length} new products successfully!`);
       
       // Refresh products list
       await fetchProducts();
     } catch (error) {
-      console.error('Error adding sample products:', error);
-      toast.error('Failed to add sample products');
+      console.error('Error adding new products:', error);
+      toast.error('Failed to add new products');
     }
   };
 
@@ -64,7 +64,7 @@ const Products = () => {
             No products found in the database. Click below to add some products.
           </p>
           <Button onClick={handleAddSampleProducts}>
-            Add Supabase Products
+            Add New Products
           </Button>
         </div>
       ) : (
