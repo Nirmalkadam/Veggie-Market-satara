@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -10,7 +9,8 @@ import {
   LogOut,
   LogIn,
   UserPlus,
-  ChevronDown
+  ChevronDown,
+  Heart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -23,11 +23,13 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { cn } from '@/lib/utils';
 
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const { totalItems } = useCart();
+  const { items: wishlistItems } = useWishlist();
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
@@ -131,6 +133,18 @@ const Navbar = () => {
                 </form>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Wishlist */}
+            <Link to="/wishlist">
+              <Button variant="ghost" size="icon" className="relative">
+                <Heart className="h-5 w-5" />
+                {wishlistItems.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs h-5 w-5 flex items-center justify-center rounded-full">
+                    {wishlistItems.length}
+                  </span>
+                )}
+              </Button>
+            </Link>
 
             {/* Cart */}
             <Link to="/cart">
@@ -247,6 +261,25 @@ const Navbar = () => {
                         {item.label}
                       </Link>
                     ))}
+                    <Link
+                      to="/wishlist"
+                      className={cn(
+                        'px-4 py-3 rounded-lg transition-colors duration-200',
+                        location.pathname === '/wishlist'
+                          ? 'bg-accent text-primary font-medium'
+                          : 'hover:bg-accent hover:text-primary'
+                      )}
+                    >
+                      <div className="flex items-center">
+                        <Heart className="h-4 w-4 mr-2" />
+                        Wishlist
+                        {wishlistItems.length > 0 && (
+                          <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                            {wishlistItems.length}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
                     {user?.isAdmin && (
                       <Link
                         to="/admin"

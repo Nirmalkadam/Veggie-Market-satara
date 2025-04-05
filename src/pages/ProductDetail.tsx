@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Check, Heart, ShoppingCart, Share2, ArrowLeft } from 'lucide-react';
@@ -11,6 +10,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +25,7 @@ import { useAuth } from '@/context/AuthContext';
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { addItem } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { user } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState<Product | null>(null);
@@ -142,6 +143,65 @@ const ProductDetail = () => {
       setQuantity(prev => prev - 1);
     }
   };
+
+  const handleShare = async () => {
+    if (!product) return;
+
+    // Create a formatted share message
+    const shareMessage = `Check out ${product.name}!\n\n` +
+      `Price: ${formatCurrency(product.price)} per ${product.unit}\n` +
+      `${product.organic ? '🌱 Organic\n' : ''}` +
+      `${product.description}\n\n` +
+      `Shop now at: ${window.location.href}`;
+
+    try {
+      if (navigator.share) {
+        // Use Web Share API if available (mobile devices)
+        await navigator.share({
+          title: `${product.name} - Veggie Market`,
+          text: shareMessage,
+          url: window.location.href
+        });
+        toast.success('Thanks for sharing!');
+      } else {
+        // On desktop, show a dropdown with sharing options
+        const textArea = document.createElement('textarea');
+        textArea.value = shareMessage;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        // Show success message with instructions
+        toast.success(
+          <div className="space-y-2">
+            <p>Product details copied to clipboard!</p>
+            <p className="text-sm text-muted-foreground">You can now paste and share it anywhere.</p>
+          </div>
+        );
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      // Fallback to copying the URL
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Product link copied to clipboard!');
+      } catch (clipboardError) {
+        console.error('Error copying to clipboard:', clipboardError);
+        toast.error('Failed to share product');
+      }
+    }
+  };
+
+  const handleWishlistToggle = () => {
+    if (!product) return;
+    
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
+  };
   
   if (loading) {
     return (
@@ -185,11 +245,21 @@ const ProductDetail = () => {
             className="w-full h-auto rounded-lg shadow-md object-cover aspect-square" 
           />
           <div className="mt-4 flex justify-between items-center">
-            <Button variant="secondary" size="icon">
-              <Heart className="h-4 w-4" />
+            <Button 
+              variant={isInWishlist(product.id) ? "default" : "secondary"} 
+              size="icon"
+              onClick={handleWishlistToggle}
+              className={isInWishlist(product.id) ? "bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-700 border-red-200" : ""}
+            >
+              <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
             </Button>
-            <Button variant="secondary" size="icon">
+            <Button 
+              variant="secondary" 
+              className="flex items-center gap-2 px-4" 
+              onClick={handleShare}
+            >
               <Share2 className="h-4 w-4" />
+              <span>Share</span>
             </Button>
           </div>
         </div>

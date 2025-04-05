@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart, Info } from 'lucide-react';
@@ -12,6 +11,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 
@@ -22,6 +22,7 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, featured = false }: ProductCardProps) => {
   const { addItem } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { user } = useAuth();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   
@@ -29,6 +30,17 @@ const ProductCard = ({ product, featured = false }: ProductCardProps) => {
     e.preventDefault();
     e.stopPropagation();
     addItem(product, 1);
+  };
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
   };
 
   // Check if the current user is an admin
@@ -80,17 +92,17 @@ const ProductCard = ({ product, featured = false }: ProductCardProps) => {
                   <Button 
                     variant="secondary" 
                     size="icon" 
-                    className="h-8 w-8 bg-white/90 hover:bg-white shadow-sm"
-                    onClick={(e) => { 
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
+                    className={cn(
+                      "h-8 w-8 bg-white/90 hover:bg-white shadow-sm",
+                      isInWishlist(product.id) ? "bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-700 border-red-200" : ""
+                    )}
+                    onClick={handleWishlistToggle}
                   >
-                    <Heart className="h-4 w-4" />
+                    <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Add to wishlist</p>
+                  {isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
