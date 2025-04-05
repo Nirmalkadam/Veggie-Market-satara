@@ -19,6 +19,27 @@ const Products = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [organicOnly, setOrganicOnly] = useState(false);
 
+  useEffect(() => {
+    // Check if products are empty and seed them automatically
+    if (products.length === 0 && !productsLoading) {
+      handleAddProducts();
+    }
+  }, [products, productsLoading]);
+
+  const handleAddProducts = async () => {
+    try {
+      toast.loading('Adding products to database...');
+      const addedProducts = await seedProducts();
+      toast.success(`Added ${addedProducts.length} products successfully!`);
+      
+      // Refresh products list
+      await fetchProducts();
+    } catch (error) {
+      console.error('Error adding products:', error);
+      toast.error('Failed to add products');
+    }
+  };
+
   const filteredProducts = products.filter(product => {
     // Convert to lowercase for case-insensitive search
     const productName = product.name ? product.name.toLowerCase() : '';
@@ -30,20 +51,6 @@ const Products = () => {
 
     return matchesSearch && matchesCategory && matchesOrganic;
   });
-
-  const handleAddSampleProducts = async () => {
-    try {
-      toast.loading('Adding new products to database...');
-      const addedProducts = await seedProducts();
-      toast.success(`Added ${addedProducts.length} new products successfully!`);
-      
-      // Refresh products list
-      await fetchProducts();
-    } catch (error) {
-      console.error('Error adding new products:', error);
-      toast.error('Failed to add new products');
-    }
-  };
 
   if (productsLoading) {
     return (
@@ -61,11 +68,8 @@ const Products = () => {
         <div className="text-center py-16">
           <h2 className="text-xl font-medium mb-4">No Products Found</h2>
           <p className="text-muted-foreground mb-6">
-            No products found in the database. Click below to add some products.
+            No products found in the database. Adding products now...
           </p>
-          <Button onClick={handleAddSampleProducts}>
-            Add New Products
-          </Button>
         </div>
       ) : (
         <>
@@ -111,13 +115,6 @@ const Products = () => {
                 Organic Only
               </label>
             </div>
-          </div>
-
-          {/* "Add More Products" button at the top */}
-          <div className="mb-6 flex justify-end">
-            <Button onClick={handleAddSampleProducts} variant="outline">
-              Add More Products
-            </Button>
           </div>
 
           {/* Product Grid */}
