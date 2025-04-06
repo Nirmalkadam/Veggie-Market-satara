@@ -1,9 +1,24 @@
-
 # Veggie Market E-commerce Platform
 
 ![Veggie Market](public/lovable-uploads/50d19bda-bf96-4d17-b05e-116f98216719.png)
 
 A modern e-commerce platform for selling organic produce and groceries, built with React, TypeScript, Tailwind CSS, and Supabase.
+
+## Recent Updates
+
+### Product Catalog Expansion
+- **Dairy Product Line Added**: 
+  - 10 new dairy products introduced
+  - Categories include:
+    - Milk (organic and regular)
+    - Cheeses (Cheddar, Mozzarella, Paneer)
+    - Dairy Specials (Ghee, Butter, Cream)
+    - Yogurt and Curd variants
+
+### Navigation Improvements
+- Enhanced product filtering
+- Improved category-based navigation
+- URL-based category filtering for seamless browsing
 
 ## Features
 
