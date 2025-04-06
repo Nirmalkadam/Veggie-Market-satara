@@ -4,6 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import ProductCard from '@/components/ProductCard';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { createMockProduct } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -84,20 +91,24 @@ const Products = () => {
               />
             </div>
 
-            {/* Category Filter */}
+            {/* Category Filter - Updated to use shadcn Select */}
             <div className="md:col-span-1">
-              <select
-                className="w-full p-2 border rounded"
+              <Select
                 value={categoryFilter}
-                onChange={e => setCategoryFilter(e.target.value)}
+                onValueChange={(value) => setCategoryFilter(value)}
               >
-                <option value="all">All Categories</option>
-                <option value="vegetables">Vegetables</option>
-                <option value="fruits">Fruits</option>
-                <option value="herbs">Herbs</option>
-                <option value="roots">Roots</option>
-                <option value="greens">Greens</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent className="bg-background">
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="vegetables">Vegetables</SelectItem>
+                  <SelectItem value="fruits">Fruits</SelectItem>
+                  <SelectItem value="herbs">Herbs</SelectItem>
+                  <SelectItem value="roots">Roots</SelectItem>
+                  <SelectItem value="greens">Greens</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Organic Only */}
