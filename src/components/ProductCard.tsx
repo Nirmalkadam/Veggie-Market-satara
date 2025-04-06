@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart, Info } from 'lucide-react';
@@ -25,6 +26,7 @@ const ProductCard = ({ product, featured = false }: ProductCardProps) => {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { user } = useAuth();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -46,6 +48,9 @@ const ProductCard = ({ product, featured = false }: ProductCardProps) => {
   // Check if the current user is an admin
   const isAdmin = user?.isAdmin || false;
 
+  // Fallback image URL
+  const fallbackImage = 'https://placehold.co/600x600/e2e8f0/94a3b8?text=No+Image';
+
   return (
     <div 
       className={cn(
@@ -60,18 +65,24 @@ const ProductCard = ({ product, featured = false }: ProductCardProps) => {
           featured ? 'aspect-[21/9] md:aspect-[2/1]' : 'aspect-square',
           isImageLoaded ? 'loaded' : ''
         )}>
+          {/* Placeholder or background image */}
+          <div className="absolute inset-0 bg-gray-100 animate-pulse"></div>
+          
+          {/* Product image */}
           <img 
-            src={product.image || ''} 
+            src={imageError ? fallbackImage : product.image || fallbackImage}
             alt={product.name}
             className={cn(
-              'hover-card-img w-full h-full object-cover',
-              featured ? 'md:object-contain' : 'object-cover'
+              'absolute inset-0 w-full h-full object-cover transition-opacity',
+              isImageLoaded ? 'opacity-100' : 'opacity-0'
             )}
             onLoad={() => setIsImageLoaded(true)}
+            onError={() => setImageError(true)}
+            loading="lazy"
           />
           
           {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-2">
+          <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
             {product.organic && (
               <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200 hover:text-green-800">
                 Organic
@@ -85,7 +96,7 @@ const ProductCard = ({ product, featured = false }: ProductCardProps) => {
           </div>
           
           {/* Quick actions */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
