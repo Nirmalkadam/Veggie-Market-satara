@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,8 @@ import {
   Leaf, 
   Truck, 
   Clock, 
-  ThumbsUp 
+  ThumbsUp,
+  ShoppingCart 
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { createMockProduct } from '@/types';

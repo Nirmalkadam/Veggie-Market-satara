@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ProductCard from '@/components/ProductCard';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -19,10 +19,15 @@ import { useProducts } from '@/hooks/useSupabaseData';
 
 const Products = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { products, loading: productsLoading, error, fetchProducts } = useProducts();
   
+  // Get category from URL query parameters
+  const searchParams = new URLSearchParams(location.search);
+  const categoryFromUrl = searchParams.get('category');
+  
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState(categoryFromUrl || 'all');
   const [organicOnly, setOrganicOnly] = useState(false);
 
   useEffect(() => {
@@ -30,7 +35,12 @@ const Products = () => {
     if (products.length === 0 && !productsLoading) {
       handleAddProducts();
     }
-  }, [products, productsLoading]);
+    
+    // Update category filter if it changes in URL
+    if (categoryFromUrl) {
+      setCategoryFilter(categoryFromUrl.toLowerCase());
+    }
+  }, [products, productsLoading, categoryFromUrl]);
 
   const handleAddProducts = async () => {
     try {
@@ -112,6 +122,9 @@ const Products = () => {
                   <SelectItem value="herbs">Herbs</SelectItem>
                   <SelectItem value="roots">Roots</SelectItem>
                   <SelectItem value="greens">Greens</SelectItem>
+                  <SelectItem value="dairy">Dairy</SelectItem>
+                  <SelectItem value="bakery">Bakery</SelectItem>
+                  <SelectItem value="pantry">Pantry</SelectItem>
                 </SelectContent>
               </Select>
             </div>
