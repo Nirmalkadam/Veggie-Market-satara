@@ -51,8 +51,13 @@ const Products = () => {
     const productName = product.name ? product.name.toLowerCase() : '';
     const searchLower = searchQuery.toLowerCase();
     
+    // For category filtering, ensure case insensitive comparison
+    const productCategory = product.category ? product.category.toLowerCase() : '';
+    const categoryLower = categoryFilter.toLowerCase();
+    
+    // Updated category matching for case-insensitivity
     const matchesSearch = productName.includes(searchLower);
-    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+    const matchesCategory = categoryFilter === 'all' || productCategory === categoryLower;
     const matchesOrganic = !organicOnly || product.organic === true;
 
     return matchesSearch && matchesCategory && matchesOrganic;
@@ -100,7 +105,7 @@ const Products = () => {
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent className="bg-background">
+                <SelectContent className="bg-background z-50">
                   <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="vegetables">Vegetables</SelectItem>
                   <SelectItem value="fruits">Fruits</SelectItem>
